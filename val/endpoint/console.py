@@ -6,15 +6,14 @@ from module_loader import (
     unload_plugin, unload_theme,
     reload_plugin, reload_theme,
     reload_all, get_loaded_plugins,
-    get_loaded_themes
+    get_loaded_themes, get_plugin_pid,
+    get_theme_pid
 )
 
 running = True
 
 def console_listener(lang_strings):
-    """
-    控制台命令监听器
-    """
+    """控制台命令监听器"""
     global running
     
     while running:
@@ -34,18 +33,23 @@ def console_listener(lang_strings):
             elif command == "plugins":
                 plugins = get_loaded_plugins()
                 if plugins:
-                    log("INFO", "Loaded plugins: " + ", ".join(plugins))
+                    plugin_info = []
+                    for plugin in plugins:
+                        pid = get_plugin_pid(plugin)
+                        plugin_info.append(f"{plugin} (PID: {pid if pid else 'N/A'})")
+                    log("INFO", "已加载插件: " + ", ".join(plugin_info))
                 else:
-                    log("INFO", "No plugins loaded")
+                    log("INFO", "没有加载任何插件")
             elif command == "themes":
                 themes = get_loaded_themes()
                 if themes:
-                    log("INFO", "Loaded themes: " + ", ".join(themes))
+                    theme_pid = get_theme_pid()
+                    log("INFO", f"已加载主题: {themes[0]} (PID: {theme_pid if theme_pid else 'N/A'})")
                 else:
-                    log("INFO", "No themes loaded")
+                    log("INFO", "没有加载任何主题")
             elif command == "unload":
                 if len(args) < 2:
-                    log("ERROR", "Usage: unload [plugin|theme] <name>")
+                    log("ERROR", "用法: unload [plugin|theme] <名称>")
                 else:
                     module_type = args[0]
                     name = args[1]
@@ -54,10 +58,10 @@ def console_listener(lang_strings):
                     elif module_type == "theme":
                         unload_theme(name)
                     else:
-                        log("ERROR", "Invalid type. Use 'plugin' or 'theme'")
+                        log("ERROR", "无效类型。使用 'plugin' 或 'theme'")
             elif command == "reload":
                 if len(args) < 2:
-                    log("ERROR", "Usage: reload [plugin|theme] <name>")
+                    log("ERROR", "用法: reload [plugin|theme] <名称>")
                 else:
                     module_type = args[0]
                     name = args[1]
@@ -66,41 +70,65 @@ def console_listener(lang_strings):
                     elif module_type == "theme":
                         reload_theme(name)
                     else:
-                        log("ERROR", "Invalid type. Use 'plugin' or 'theme'")
+                        log("ERROR", "无效类型。使用 'plugin' 或 'theme'")
             elif command == "reloadall":
                 reload_all()
+            elif command == "restart":
+                if len(args) < 2:
+                    log("ERROR", "用法: restart [plugin|theme] <名称>")
+                else:
+                    module_type = args[0]
+                    name = args[1]
+                    if module_type == "plugin":
+                        if unload_plugin(name):
+                            reload_plugin(name)
+                    elif module_type == "theme":
+                        if unload_theme(name):
+                            reload_theme(name)
+                    else:
+                        log("ERROR", "无效类型。使用 'plugin' 或 'theme'")
+            elif command == "kill":
+                if len(args) < 2:
+                    log("ERROR", "用法: kill [plugin|theme] <名称>")
+                else:
+                    module_type = args[0]
+                    name = args[1]
+                    if module_type == "plugin":
+                        unload_plugin(name)
+                    elif module_type == "theme":
+                        unload_theme(name)
+                    else:
+                        log("ERROR", "无效类型。使用 'plugin' 或 'theme'")
             elif command == "help":
                 help_text = """
-                Available commands:
-                  stop         - Stop loader
-                  plugins      - Show loaded plugins
-                  themes       - Show loaded themes
-                  unload       - Unload module (usage: unload [plugin|theme] <name>)
-                  reload       - Reload module (usage: reload [plugin|theme] <name>)
-                  reloadall    - Reload all modules
-                  help         - Show this help
+                可用命令:
+                  stop         - 停止加载器
+                  plugins      - 显示已加载插件
+                  themes       - 显示已加载主题
+                  unload       - 卸载模块 (用法: unload [plugin|theme] <名称>)
+                  reload       - 重新加载模块 (用法: reload [plugin|theme] <名称>)
+                  restart      - 重启模块 (用法: restart [plugin|theme] <名称>)
+                  kill         - 强制停止模块 (用法: kill [plugin|theme] <名称>)
+                  reloadall    - 重新加载所有模块
+                  help         - 显示帮助信息
                 """
                 print(help_text.strip())
             else:
-                log("ERROR", f"Unknown command: {command}")
+                log("ERROR", f"未知命令: {command}")
         except (EOFError, KeyboardInterrupt):
             running = False
             break
         except Exception as e:
-            log("ERROR", f"Command error: {str(e)}")
+            log("ERROR", f"命令错误: {str(e)}")
 
 def start_console(lang_strings):
-    """
-    启动控制台线程
-    """
+    """启动控制台线程"""
     console_thread = threading.Thread(target=console_listener, args=(lang_strings,))
     console_thread.daemon = True
     console_thread.start()
     return console_thread
 
 def stop_console():
-    """
-    停止控制台
-    """
+    """停止控制台"""
     global running
     running = False
