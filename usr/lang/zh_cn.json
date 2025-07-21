@@ -13,9 +13,14 @@
     "reload_errors": "重新加载过程中发生错误，部分模块可能未加载",
     "plugin_dir_missing": "插件目录不存在:",
     "theme_dir_missing": "主题目录不存在:",
-    "start_complete": "加载器启动完成。输入 'stop' 退出",
+    
+    "module_loaded": "已加载模块: {module_name}",
+    "start_complete": "核心模块初始化完成，输入 'stop' 退出控制台",
+    "port_in_use": "端口 {port} 已被占用，尝试使用 {new_port}",
+    "starting": "正在初始化核心模块...",
     "stopped": "加载器已停止",
     "no_modules_loaded": "警告：未加载任何插件或主题。",
+    "missing_translation": "[翻译缺失] {key}",
     "already_running": "加载器已在运行",
     "plugin_unload_error": "插件卸载错误:",
     "theme_unload_error": "主题卸载错误:"

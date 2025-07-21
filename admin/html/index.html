@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="dashboard">
+    <div class="dashboard-header">
+        <h1>欢迎使用 LMoadll 管理面板</h1>
+        <p>当前系统状态: 运行中</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>已加载插件</h3>
+            <p class="stat-value">0</p>
+            <a href="/plugins" class="btn">管理插件</a>
+        </div>
+        <div class="stat-card">
+            <h3>已安装主题</h3>
+            <p class="stat-value">0</p>
+            <a href="/themes" class="btn">管理主题</a>
+        </div>
+        <div class="stat-card">
+            <h3>系统运行时间</h3>
+            <p class="stat-value">0小时</p>
+            <a href="/settings" class="btn">系统设置</a>
+        </div>
+    </div>
+
+    <div class="recent-activity">
+        <h2>最近活动</h2>
+        <div class="activity-list">
+            <p class="no-activity">暂无活动记录</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

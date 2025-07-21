@@ -11,22 +11,22 @@ def color_text(text, color_code):
 
 def log(level, message, lang_strings=None):
     """
-    带颜色和时间的日志记录
+    带颜色和时间的日志记录 - 通过队列输出
     """
-    color_code = config.LOG_COLORS.get(level, "97")
-    level_display = color_text(level, color_code)
-    timestamp = time.strftime("%H:%M:%S")
+    from var.lmoadll.endpoint.console import log_queue
     
     if lang_strings and message in lang_strings:
         msg = lang_strings[message]
     else:
         msg = message
     
-    print(f"[{timestamp} {level_display}] {msg}")
+    # 发送到日志队列而不是直接打印
+    log_queue.put((level, msg))
 
 def print_banner():
     """
     打印启动横幅
+    Ciallo～(∠・ω< )⌒☆ 𝑪𝒊𝒂𝒍𝒍𝒐～(∠・ω< )⌒☆ 𝓒𝓲𝓪𝓵𝓵𝓸～(∠・ω< )⌒☆ 𝐂𝐢𝐚𝐥𝐥𝐨～(∠・ω< )⌒☆ ℂ𝕚𝕒𝕝𝕝𝕠～(∠・ω< )⌒☆ 𝘊𝘪𝘢𝘭𝘭𝘰～(∠・ω< )⌒☆ 𝗖𝗶𝗮𝗹𝗹𝗼～(∠・ω< )⌒☆ 𝙲𝚒𝚊𝚕𝚕𝚘～(∠・ω< )⌒☆ ᴄɪᴀʟʟᴏ～(∠・ω< )⌒☆ 𝕮𝖎𝖆𝖑𝖑𝖔～(∠・ω< )⌒☆ ℭ𝔦𝔞𝔩𝔩𝔬～(∠・ω< )⌒☆ ᶜⁱᵃˡˡᵒ～(∠・ω< )⌒☆ ᑕ⫯Ꭿ𝘭𝘭𝖮～(∠・ω< )⌒☆ ☆⌒( >ω・∠)～ollɐıɔ
     """
     banner = r"""
  __                                          __        __  __  __ 
