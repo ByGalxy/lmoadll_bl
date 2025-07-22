@@ -1,11 +1,11 @@
 import time
-import config
+from config_loader import get_config
 
 def color_text(text, color_code):
     """
     添加颜色到文本
     """
-    if config.USE_COLORS:
+    if get_config('terminal', 'use_colors', default=True):
         return f"\033[{color_code}m{text}\033[0m"
     return text
 

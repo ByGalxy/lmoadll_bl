@@ -2,8 +2,7 @@ import time
 import threading
 import signal
 import sys
-import time
-from config import DEFAULT_LANG
+from config_loader import get_config
 from utils import log, print_banner
 from language import load_language, get_string
 from module_loader import load_plugins, load_themes, unload_all, reload_all
@@ -31,7 +30,7 @@ def start_loader():
         return
     
     # 加载语言文件
-    lang_strings = load_language(DEFAULT_LANG)
+    lang_strings = load_language(get_config('language', 'default_lang'))
     
     # 显示启动横幅
     print_banner()

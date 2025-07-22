@@ -2,7 +2,7 @@ import os
 import sys
 import importlib.util
 import traceback
-import config
+from config_loader import get_config
 from utils import log
 from language import get_string
 import multiprocessing
@@ -112,7 +112,7 @@ def _load_module(folder_path, expected_file, module_type):
 def load_plugins():
     """加载所有插件到独立进程"""
     global loaded_plugins, plugin_processes
-    plugin_dir = os.path.join(os.path.dirname(__file__), config.PLUGINS_DIR)
+    plugin_dir = os.path.join(os.path.dirname(__file__), get_config('directories', 'plugins_dir'))
     
     if not os.path.exists(plugin_dir):
         log("ERROR", get_string("plugin_dir_missing") + f" {plugin_dir}")
@@ -156,7 +156,7 @@ def load_plugins():
 def load_themes():
     """加载主题到独立进程（只加载第一个有效主题）"""
     global loaded_themes, current_theme, theme_process
-    theme_dir = os.path.join(os.path.dirname(__file__), config.THEMES_DIR)
+    theme_dir = os.path.join(os.path.dirname(__file__), get_config('directories', 'themes_dir'))
     
     if not os.path.exists(theme_dir):
         log("ERROR", get_string("theme_dir_missing") + f" {theme_dir}")

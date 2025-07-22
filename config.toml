@@ -1,0 +1,13 @@
+[directories]
+plugins_dir = "usr/plugins"
+themes_dir = "usr/themes"
+lang_dir = "usr/lang"
+
+[language]
+default_lang = "zh_cn"
+
+[terminal]
+use_colors = true
+
+[theme]
+load_only_one_theme = true

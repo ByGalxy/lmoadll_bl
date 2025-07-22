@@ -4,7 +4,7 @@ from typing import Dict, Optional
 from utils import log
 from pathlib import Path
 
-import config
+from config_loader import get_config
 
 class Localization:
     """
@@ -30,7 +30,7 @@ class Localization:
         """获取单例实例"""
 
         if cls._instance is None:
-            lang_path = (Path(__file__).parent / config.LANG_DIR).resolve()  # 修复Path导入并使用config.LANG_DIR
+            lang_path = (Path(__file__).parent / get_config('directories', 'lang_dir')).resolve()  # 修复Path导入并使用LANG_DIR
             cls._instance = cls(lang_path)  # 已通过resolve()获取绝对路径，无需重复解析
         return cls._instance
 
@@ -79,8 +79,8 @@ class Localization:
 
     def _select_fallback_language(self, available: list[str]) -> Optional[str]:
         """选择备用语言，优先zh_CN"""
-        from config import DEFAULT_LANG, LANG_DIR
-        priority_list = [DEFAULT_LANG]  # 严格使用用户配置，不启用任何备用语言
+        from config_loader import get_config
+        priority_list = [get_config('language', 'default_lang')]  # 严格使用用户配置，不启用任何备用语言
         
         for lang in priority_list:
             if lang in available:
