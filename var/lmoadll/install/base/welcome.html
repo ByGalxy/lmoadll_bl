@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎使用 lmoadll_bl 平台</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 简洁黑白紫风格，参考Typecho安装页面 */
+        :root {
+            --primary-color: #7b61ff;
+            --light-color: #ffffff;
+            --dark-color: #000000;
+            --gray-color: #f5f5f5;
+            --dark-bg: #333333;
+        }
+
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 顶部导航 */
+        .top-nav {
+            background-color: var(--dark-bg);
+            color: var(--light-color);
+            padding: 15px 0;
+            text-align: center;
+        }
+
+        .top-nav h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: normal;
+        }
+
+        /* 步骤指示器 */
+        .steps-container {
+            background-color: var(--light-color);
+            border-bottom: 1px solid #e0e0e0;
+            padding: 10px 0;
+            margin-bottom: 30px;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 15px;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            margin-right: 8px;
+        }
+
+        .step.completed .step-number {
+            background-color: #888888;
+        }
+
+        .step-text {
+            font-size: 0.9rem;
+        }
+
+        .step:not(:last-child)::after {
+            content: '→';
+            margin-left: 25px;
+            color: #ccc;
+        }
+
+        /* 主内容区 */
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto 50px;
+            padding: 0 20px;
+        }
+
+        .card {
+            background-color: var(--light-color);
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        /* 按钮样式 */
+        .primary-btn {
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .primary-btn:hover {
+            background-color: #6a50e6;
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        /* 许可协议样式 */
+        .license-text {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .checkbox-container {
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="top-nav">
+        <h1>lmoadll_bl</h1>
+    </div>
+
+    <!-- 步骤指示器 -->
+    <div class="steps-container">
+        <div class="steps">
+            <div class="step active">
+                <div class="step-number">1</div>
+                <div class="step-text">欢迎使用</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-text">数据库配置</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-text">网站信息</div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-text">安装完成</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-container">
+        <div class="card" id="step-1">
+            <h2>欢迎使用 lmoadll_bl 平台</h2>
+
+            <div class="section-title">安装说明</div>
+            <p class="license-text">
+                本安装程序将自动检测服务器环境是否符合配置要求。如果不符合，将在上方出现提示信息，请按照提示信息检查您的主机配置。如果服务器环境符合要求，将在下方出现"开始下一步"的按钮，点击该按钮即可一步完成安装。
+            </p>
+
+            <div class="section-title">许可协议</div>
+            <p class="license-text">
+                lmoadll_bl 基于 GPL 协议发布，我们允许用户在 GPL 协议的范围内使用、拷贝、修改和分发程序。在 GPL 许可的范围内，您可以自由地将其用于商业以及非商业用途。
+            </p>
+            <p class="license-text">
+                lmoadll_bl 软件由社区提供支持，核心开发团队负责维护并每日开发工作以及新特性的制定。如果您遇到使用上的问题，程序中的 BUG，以及期待的新功能，欢迎您在社区中交流或者直接向我们反馈代码。对于贡献出色的，您的名字将出现在贡献者名单中。
+            </p>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="agree-terms">
+                <label for="agree-terms">我已阅读并同意上述许可协议</label>
+            </div>
+
+            <div class="btn-container">
+                <a href="#step-2" class="primary-btn" id="next-btn" disabled>我准备好了，开始下一步 →</a>
+            </div>
+        </div>
+
+        <div class="card" id="step-2" style="display: none;">
+            <h2>数据库配置</h2>
+            <p>请输入您的数据库连接信息：</p>
+            <div class="mb-3 text-start">
+                <label for="db-type" class="form-label">数据库类型</label>
+                <select class="form-select" id="db-type">
+                    <option value="mysql">MySQL</option>
+                    <option value="postgresql">PostgreSQL</option>
+                </select>
+            </div>
+            <div class="mb-3 text-start">
+                <label for="db-host" class="form-label">主机地址</label>
+                <input type="text" class="form-control" id="db-host" placeholder="localhost">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="db-port" class="form-label">端口</label>
+                <input type="text" class="form-control" id="db-port" placeholder="3306">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="db-name" class="form-label">数据库名称</label>
+                <input type="text" class="form-control" id="db-name" placeholder="lmoadll_bl">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="db-user" class="form-label">用户名</label>
+                <input type="text" class="form-control" id="db-user" placeholder="root">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="db-password" class="form-label">密码</label>
+                <input type="password" class="form-control" id="db-password" placeholder="密码">
+            </div>
+            <div class="btn-container">
+                <button class="primary-btn" id="test-db-connection">测试连接</button>
+                <a href="#step-3" class="primary-btn" id="to-step-3" disabled style="margin-left: 10px;">继续 →</a>
+            </div>
+        </div>
+
+        <div class="card" id="step-3" style="display: none;">
+            <h2>网站信息配置</h2>
+            <p>请输入您的网站信息：</p>
+            <div class="mb-3 text-start">
+                <label for="site-name" class="form-label">网站名称</label>
+                <input type="text" class="form-control" id="site-name" placeholder="lmoadll_bl 平台">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="site-url" class="form-label">网站 URL</label>
+                <input type="text" class="form-control" id="site-url" placeholder="https://example.com">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="site-description" class="form-label">网站描述</label>
+                <textarea class="form-control" id="site-description" rows="3" placeholder="简要描述您的网站"></textarea>
+            </div>
+            <div class="mb-3 text-start">
+                <label for="admin-email" class="form-label">管理员邮箱</label>
+                <input type="email" class="form-control" id="admin-email" placeholder="admin@example.com">
+            </div>
+            <div class="btn-container">
+                <a href="#step-4" class="primary-btn" id="to-step-4">开始安装 →</a>
+            </div>
+        </div>
+
+        <div class="card" id="step-4" style="display: none;">
+            <h2>安装完成！</h2>
+            <p>恭喜您成功安装了 lmoadll_bl 平台。现在您可以开始使用了。</p>
+            <div class="mb-3 text-start">
+                <h3>管理员账户</h3>
+                <p>用户名: admin</p>
+                <p>密码: 123456 (建议立即修改)</p>
+            </div>
+            <div class="mb-3 text-start">
+                <h3>登录信息</h3>
+                <p>访问 <a href="/admin" class="text-primary">/admin</a> 登录管理后台</p>
+                <p>访问 <a href="/" class="text-primary">/</a> 查看前台网站</p>
+            </div>
+            <div class="btn-container">
+                <a href="/admin" class="primary-btn">登录管理后台 →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 获取DOM元素
+        const agreeTerms = document.getElementById('agree-terms');
+        const nextBtn = document.getElementById('next-btn');
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const step3 = document.getElementById('step-3');
+        const step4 = document.getElementById('step-4');
+        const testDbBtn = document.getElementById('test-db-connection');
+        const toStep3Btn = document.getElementById('to-step-3');
+        const toStep4Btn = document.getElementById('to-step-4');
+        const steps = document.querySelectorAll('.step');
+
+        // 同意条款复选框事件
+        agreeTerms.addEventListener('change', () => {
+            nextBtn.disabled = !agreeTerms.checked;
+        });
+
+        // 下一步按钮事件
+        nextBtn.addEventListener('click', () => {
+            step1.style.display = 'none';
+            step2.style.display = 'block';
+            steps[1].classList.add('active');
+        });
+
+        // 数据库测试连接按钮事件
+        testDbBtn.addEventListener('click', () => {
+            alert('数据库连接测试成功！');
+            toStep3Btn.disabled = false;
+        });
+
+        // 前往网站信息配置
+        toStep3Btn.addEventListener('click', () => {
+            step2.style.display = 'none';
+            step3.style.display = 'block';
+            steps[2].classList.add('active');
+        });
+
+        // 开始安装
+        toStep4Btn.addEventListener('click', () => {
+            step3.style.display = 'none';
+            step4.style.display = 'block';
+            steps[3].classList.add('active');
+            // 模拟安装过程
+            alert('安装成功！');
+        });
+    </script>
+</body>
+</html>
