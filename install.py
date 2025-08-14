@@ -9,5 +9,8 @@ def install():
     config_path = "config.toml"
     if not os.path.exists(config_path):
         return FileResponse("var/lmoadll/install/base/welcome.html")
-    # 如果需要进一步处理配置文件，可以在这里添加代码
+    pass
+
+@installRouter.post("")
+def get_install_Check_connection():
     pass
