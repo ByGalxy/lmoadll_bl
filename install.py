@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
+from flask import Blueprint
 import os
 
-installRouter = APIRouter()
+installRouter = Blueprint('install', __name__, url_prefix='/install')
 
 @installRouter.get("/")
 def install():
