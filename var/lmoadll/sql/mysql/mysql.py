@@ -4,7 +4,7 @@ def sc_verificat_db_conn(db_host, db_port, db_name, db_user, db_password):
     try:
         db = pymysql.connect(
                 host=db_host,
-                port=db_port,
+                port=int(db_port),
                 user=db_user,
                 password=db_password,
                 database=db_name,  # 使用传入的数据库名参数
