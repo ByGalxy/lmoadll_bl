@@ -7,8 +7,9 @@ lmoadll_bl platform
 @license  GNU General Public License 3.0
 
 '''
-from install import installRouter
+
 from flask import Flask
+from install import installRouter
 
 app = Flask(__name__)
 

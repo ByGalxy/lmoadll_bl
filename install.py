@@ -1,17 +1,37 @@
-from fastapi import APIRouter
-from fastapi.responses import FileResponse
-from flask import Blueprint
+from flask import Blueprint, Response, send_file, request, jsonify
+from var.lmoadll.sql.mysql.mysql import sc_verificat_db_conn as svdc
 import os
 
 installRouter = Blueprint('install', __name__, url_prefix='/install')
 
-@installRouter.get("/")
-def install():
+@installRouter.route('/', methods=['GET'])
+def install_index() -> Response:
     config_path = "config.toml"
     if not os.path.exists(config_path):
-        return FileResponse("var/lmoadll/install/base/welcome.html")
-    pass
+        return send_file("install/base/install.html")
 
-@installRouter.post("")
-def get_install_Check_connection():
-    pass
+@installRouter.route('/verificat_db_conn', methods=['POST'])
+def install_verificat_db_conn() -> Response:
+    data = request.get_json()
+
+    if not data:
+        return jsonify({'success': False, 'message': '请求的数据为空'})
+
+    if data['db_type'] == 'mysql':
+        result = svdc(
+                data.get("db_host"), 
+                data.get("db_port"), 
+                data.get("db_name"), 
+                data.get("db_user"), 
+                data.get("db_password")
+            )
+        
+        if result[0]:
+            return jsonify({'success': True, 'message': 'MySQL连接成功'})
+        else:
+            return jsonify({'success': False, 'message': f'数据库连接错误: {result[1]}'})
+    else:
+        return jsonify({
+            'success': False, 
+            'message': f'数据类型本喵不认识 {data["db_type"]}'
+        })

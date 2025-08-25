@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -146,6 +147,7 @@
         }
     </style>
 </head>
+
 <body>
 
 
@@ -164,7 +166,8 @@
                 lmoadll_bl 基于 GPL 协议发布，我们允许用户在 GPL 协议的范围内使用、拷贝、修改和分发程序。在 GPL 许可的范围内，您可以自由地将其用于商业以及非商业用途。
             </p>
             <p class="license-text">
-                lmoadll_bl 软件由社区提供支持，核心开发团队负责维护并每日开发工作以及新特性的制定。如果您遇到使用上的问题，程序中的 BUG，以及期待的新功能，欢迎您在社区中交流或者直接向我们反馈代码。对于贡献出色的，您的名字将出现在贡献者名单中。
+                lmoadll_bl 软件由社区提供支持，核心开发团队负责维护并每日开发工作以及新特性的制定。如果您遇到使用上的问题，程序中的
+                BUG，以及期待的新功能，欢迎您在社区中交流或者直接向我们反馈代码。对于贡献出色的，您的名字将出现在贡献者名单中。
             </p>
 
             <div class="checkbox-container">
@@ -180,37 +183,49 @@
         <div class="card" id="step-2" style="display: none;">
             <h2>数据库配置</h2>
             <p>请输入您的数据库连接信息：</p>
-            <div class="mb-3 text-start">
-                <label for="db-type" class="form-label">数据库类型</label>
-                <select class="form-select" id="db-type">
-                    <option value="mysql">MySQL</option>
-                    <option value="postgresql">PostgreSQL</option>
-                </select>
-            </div>
-            <div class="mb-3 text-start">
-                <label for="db-host" class="form-label">主机地址</label>
-                <input type="text" class="form-control" id="db-host" placeholder="localhost">
-            </div>
-            <div class="mb-3 text-start">
-                <label for="db-port" class="form-label">端口</label>
-                <input type="text" class="form-control" id="db-port" placeholder="3306">
-            </div>
-            <div class="mb-3 text-start">
-                <label for="db-name" class="form-label">数据库名称</label>
-                <input type="text" class="form-control" id="db-name" placeholder="lmoadll_bl">
-            </div>
-            <div class="mb-3 text-start">
-                <label for="db-user" class="form-label">用户名</label>
-                <input type="text" class="form-control" id="db-user" placeholder="root">
-            </div>
-            <div class="mb-3 text-start">
-                <label for="db-password" class="form-label">密码</label>
-                <input type="password" class="form-control" id="db-password" placeholder="密码">
-            </div>
-            <div class="btn-container">
-                <button class="primary-btn" id="test-db-connection">测试连接</button>
-                <a href="#step-3" class="primary-btn disabled" id="to-step-3" style="margin-left: 10px;">继续 →</a>
-            </div>
+            <form id="db-config-form">
+                <div class="mb-3 text-start">
+                    <label for="db-type" class="form-label">数据库类型</label>
+                    <select class="form-select" id="db-type" name="db_type" required>
+                        <option value="">请选择数据库类型</option>
+                        <option value="mysql">MySQL</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label for="db-host" class="form-label">主机地址</label>
+                    <input type="text" class="form-control" id="db-host" name="db_host" placeholder="localhost"
+                        required>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label for="db-port" class="form-label">端口</label>
+                    <input type="number" class="form-control" id="db-port" name="db_port" placeholder="3306" required>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label for="db-name" class="form-label">数据库名称</label>
+                    <input type="text" class="form-control" id="db-name" name="db_name" placeholder="lmoadll_bl"
+                        required>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label for="db-user" class="form-label">用户名</label>
+                    <input type="text" class="form-control" id="db-user" name="db_user" placeholder="root" required>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label for="db-password" class="form-label">密码</label>
+                    <input type="password" class="form-control" id="db-password" name="db_password" placeholder="密码">
+                </div>
+
+                <div class="btn-container">
+                    <button type="button" class="primary-btn" id="verificat_db_conn">测试连接</button>
+                    <button type="submit" class="primary-btn" id="to-step-3" style="margin-left: 10px;">
+                        继续
+                    </button>
+                </div>
+            </form>
         </div>
 
         <div class="card" id="step-3" style="display: none;">
@@ -264,7 +279,7 @@
         const step2 = document.getElementById('step-2');
         const step3 = document.getElementById('step-3');
         const step4 = document.getElementById('step-4');
-        const testDbBtn = document.getElementById('test-db-connection');
+        const testDbBtn = document.getElementById('verificat_db_conn');
         const toStep3Btn = document.getElementById('to-step-3');
         const toStep4Btn = document.getElementById('to-step-4');
         const steps = document.querySelectorAll('.step');
@@ -295,44 +310,6 @@
             steps[1].classList.add('active');
         });
 
-        // 数据库测试连接按钮事件
-        testDbBtn.addEventListener('click', async () => {
-            const dbConfig = {
-                db_type: document.getElementById('db-type').value,
-                host: document.getElementById('db-host').value,
-                port: parseInt(document.getElementById('db-port').value),
-                database: document.getElementById('db-name').value,
-                username: document.getElementById('db-user').value,
-                password: document.getElementById('db-password').value
-            };
-
-            try {
-                const response = await fetch('/install/check-db', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dbConfig)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('✅ ' + result.message);
-                    toStep3Btn.disabled = false;
-                    toStep3Btn.classList.remove('disabled');
-                } else {
-                    alert('❌ ' + result.message);
-                    toStep3Btn.disabled = true;
-                    toStep3Btn.classList.add('disabled');
-                }
-            } catch (error) {
-                alert('❌ 连接测试失败: ' + error.message);
-                toStep3Btn.disabled = true;
-                toStep3Btn.classList.add('disabled');
-            }
-        });
-
         // 前往网站信息配置
         toStep3Btn.addEventListener('click', () => {
             step2.style.display = 'none';
@@ -349,5 +326,65 @@
             alert('安装成功！');
         });
     </script>
+    <script>
+        // 表单提交处理
+document.getElementById('db-config-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const dbConfig = Object.fromEntries(formData.entries());
+    
+    try {
+        const response = await fetch('/api/install/db-config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dbConfig)
+        });
+        
+        if (response.ok) {
+            // 跳转到下一步
+            showStep(3);
+        } else {
+            const error = await response.json();
+            alert('保存失败: ' + error.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('网络错误，请重试');
+    }
+});
+
+// 测试连接按钮
+document.getElementById('verificat_db_conn').addEventListener('click', async function() {
+    const formData = new FormData(document.getElementById('db-config-form'));
+    const dbConfig = Object.fromEntries(formData.entries());
+    
+    try {
+        const response = await fetch('/install/verificat_db_conn', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dbConfig)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('数据库连接测试成功！');
+            // 启用继续按钮
+            document.getElementById('to-step-3').classList.remove('disabled');
+        } else {
+            alert('连接失败: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('测试连接时发生错误');
+    }
+});
+    </script>
 </body>
+
 </html>
