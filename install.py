@@ -14,17 +14,13 @@ def install_index() -> Response:
 def install_verificat_db_conn() -> Response:
     data = request.get_json()
 
-    if not data:
+    if not data: 
         return jsonify({'success': False, 'message': '请求的数据为空'})
 
+    # 你什么也做不到，也选择不了(不是)
     if data['db_type'] == 'mysql':
-        result = svdc(
-                data.get("db_host"), 
-                data.get("db_port"), 
-                data.get("db_name"), 
-                data.get("db_user"), 
-                data.get("db_password")
-            )
+        result = svdc(data.get("db_host"), data.get("db_port"), data.get("db_name"), data.get("db_user"), data.get("db_password")
+        )
         
         if result[0]:
             return jsonify({'success': True, 'message': 'MySQL连接成功'})
