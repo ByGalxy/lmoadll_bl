@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import pymysql
+import sqlite3
 
 
 
-# 测试数据库连接
 def sc_verification_db_conn(db_host, db_port, db_name, db_user, db_password):
     try:
-        db = pymysql.connect(
+        db = sqlite3.connect(
                 host=db_host,
                 port=int(db_port),
                 user=db_user,
@@ -22,5 +21,5 @@ def sc_verification_db_conn(db_host, db_port, db_name, db_user, db_password):
 
         return [True, 0]
     
-    except pymysql.Error as e:
+    except sqlite3.Error as e:
         return [False, e]

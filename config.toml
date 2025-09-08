@@ -1,0 +1,8 @@
+[server]
+# 如果需要用到内置的系统安装, 需要把install设置为true
+install = true
+
+[db]
+sql_rd = ''
+sql_prefix = ''
+sql_sqlite_path = ''

@@ -188,35 +188,54 @@
                     <label for="db-type" class="form-label">数据库类型</label>
                     <select class="form-select" id="db-type" name="db_type" required>
                         <option value="">请选择数据库类型</option>
+                        <option value="sqlite">SQLite</option>
                         <option value="mysql">MySQL</option>
                     </select>
                 </div>
 
-                <div class="mb-3 text-start">
-                    <label for="db-host" class="form-label">主机地址</label>
-                    <input type="text" class="form-control" id="db-host" name="db_host" placeholder="localhost"
-                        required>
+                <!-- MySQL配置项 -->
+                <div id="mysql-config" style="display: none;">
+                    <div class="mb-3 text-start">
+                        <label for="db-host" class="form-label">主机地址</label>
+                        <input type="text" class="form-control" id="db-host" name="db_host" placeholder="localhost">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="db-port" class="form-label">端口</label>
+                        <input type="number" class="form-control" id="db-port" name="db_port" placeholder="3306">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="db-name" class="form-label">数据库名称</label>
+                        <input type="text" class="form-control" id="db-name" name="db_name" placeholder="lmoadll_bl">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="db-user" class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="db-user" name="db_user" placeholder="root">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="db-password" class="form-label">密码</label>
+                        <input type="password" class="form-control" id="db-password" name="db_password"
+                            placeholder="密码">
+                    </div>
                 </div>
 
-                <div class="mb-3 text-start">
-                    <label for="db-port" class="form-label">端口</label>
-                    <input type="number" class="form-control" id="db-port" name="db_port" placeholder="3306" required>
-                </div>
+                <!-- SQLite配置项 -->
+                <div id="sqlite-config" style="display: none;">
+                    <div class="mb-3 text-start">
+                        <label for="db-prefix" class="form-label">数据库前缀</label>
+                        <input type="text" class="form-control" id="db-prefix" name="db_prefix" placeholder="lmoadll_"
+                            value="lmoadll_">
+                    </div>
 
-                <div class="mb-3 text-start">
-                    <label for="db-name" class="form-label">数据库名称</label>
-                    <input type="text" class="form-control" id="db-name" name="db_name" placeholder="lmoadll_bl"
-                        required>
-                </div>
-
-                <div class="mb-3 text-start">
-                    <label for="db-user" class="form-label">用户名</label>
-                    <input type="text" class="form-control" id="db-user" name="db_user" placeholder="root" required>
-                </div>
-
-                <div class="mb-3 text-start">
-                    <label for="db-password" class="form-label">密码</label>
-                    <input type="password" class="form-control" id="db-password" name="db_password" placeholder="密码">
+                    <div class="mb-3 text-start">
+                        <label for="db-path" class="form-label">数据库文件路径</label>
+                        <input type="text" class="form-control" id="db-path" name="db_path"
+                            placeholder="例如: /var/www/database/">
+                        <div id="sqlite-path-note" class="form-text" style="display: none;"></div>
+                    </div>
                 </div>
 
                 <div class="btn-container">
@@ -248,7 +267,7 @@
                 <input type="email" class="form-control" id="admin-email" placeholder="admin@example.com">
             </div>
             <div class="btn-container">
-                <a href="#step-4" class="primary-btn" id="to-step-4">开始安装 →</a>
+                <a href="#step-4" class="primary-btn" id="to-step-4">开始安装</a>
             </div>
         </div>
 
@@ -279,7 +298,7 @@
         const step2 = document.getElementById('step-2');
         const step3 = document.getElementById('step-3');
         const step4 = document.getElementById('step-4');
-        const testDbBtn = document.getElementById('verificat_db_conn');
+        const testDbBtn = document.getElementById('verification_db_conn');
         const toStep3Btn = document.getElementById('to-step-3');
         const toStep4Btn = document.getElementById('to-step-4');
         const steps = document.querySelectorAll('.step');
@@ -326,64 +345,102 @@
             alert('安装成功！');
         });
     </script>
-    <script>
-        // 表单提交处理
-document.getElementById('db-config-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const dbConfig = Object.fromEntries(formData.entries());
-    
-    try {
-        const response = await fetch('/api/install/db-config', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(dbConfig)
-        });
-        
-        if (response.ok) {
-            // 跳转到下一步
-            showStep(3);
-        } else {
-            const error = await response.json();
-            alert('保存失败: ' + error.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('网络错误，请重试');
-    }
-});
 
-// 测试连接按钮
-document.getElementById('verificat_db_conn').addEventListener('click', async function() {
-    const formData = new FormData(document.getElementById('db-config-form'));
-    const dbConfig = Object.fromEntries(formData.entries());
-    
-    try {
-        const response = await fetch('/install/verificat_db_conn', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(dbConfig)
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const dbTypeSelect = document.getElementById('db-type');
+            const mysqlConfig = document.getElementById('mysql-config');
+            const sqliteConfig = document.getElementById('sqlite-config');
+            const sqlitePathNote = document.getElementById('sqlite-path-note');
+            const testConnBtn = document.getElementById('verificat_db_conn');
+
+            dbTypeSelect.addEventListener('change', function () {
+                const dbType = this.value;
+
+                // 隐藏所有配置
+                mysqlConfig.style.display = 'none';
+                sqliteConfig.style.display = 'none';
+                sqlitePathNote.style.display = 'none';
+
+                // 根据选择的数据库类型显示相应配置
+                if (dbType === 'mysql') {
+                    mysqlConfig.style.display = 'block';
+                    // 显示测试连接按钮
+                    testConnBtn.style.display = 'block';
+                } else if (dbType === 'sqlite') {
+                    sqliteConfig.style.display = 'block';
+                    // 隐藏测试连接按钮
+                    testConnBtn.style.display = 'none';
+
+                    // 向后端发送请求获取SQLite默认路径
+                    fetch('/install/get_sqlite_path', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ db_type: 'sqlite' })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.path) {
+                                // 设置数据库路径输入框的值
+                                document.getElementById('db-path').value = data.path;
+                                sqlitePathNote.textContent = '\'' + data.path + '\'' + ' 这个是系统自动生成的地址';
+                                sqlitePathNote.style.display = 'block';
+                            } else if (data.error) {
+                                console.error('获取SQLite路径时出错:', data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('获取SQLite路径时出错:', error);
+                        });
+                }
+            });
+
+            // 测试连接按钮事件处理（仅对MySQL有效）
+            testConnBtn.addEventListener('click', function () {
+                const dbType = document.getElementById('db-type').value;
+                // 如果选择的是SQLite，直接返回
+                if (dbType === 'sqlite') return;
+
+                let requestData = { db_type: dbType };
+
+                if (dbType === 'mysql') {
+                    requestData.db_host = document.getElementById('db-host').value;
+                    requestData.db_port = document.getElementById('db-port').value;
+                    requestData.db_name = document.getElementById('db-name').value;
+                    requestData.db_user = document.getElementById('db-user').value;
+                    requestData.db_password = document.getElementById('db-password').value;
+                }
+
+                // 发送验证请求到后端
+                fetch('/install/verification_db_conn', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('数据库连接成功!');
+                        } else {
+                            alert('数据库连接失败: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('验证数据库连接时出错:', error);
+                        alert('验证数据库连接时出错');
+                    });
+            });
+
+            // 表单提交处理
+            document.getElementById('db-config-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                // 这里可以添加表单验证和提交逻辑
+            });
         });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            alert('数据库连接测试成功！');
-            // 启用继续按钮
-            document.getElementById('to-step-3').classList.remove('disabled');
-        } else {
-            alert('连接失败: ' + result.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('测试连接时发生错误');
-    }
-});
     </script>
 </body>
 
