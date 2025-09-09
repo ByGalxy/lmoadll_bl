@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, Response, send_file, request, jsonify, abort
 from var.lmoadll.sql.mysql.mysql import sc_verification_db_conn as mysql_svdc
-from var.lmoadll.sql.mysql.sqlite import sc_verification_db_conn as sqlite_svdc
+from var.lmoadll.sql.sqlite.sqlite import sc_verification_db_conn as sqlite_svdc
 from var.lmoadll.toml_config import Doesitexist_configtoml as dctoml
 from functools import wraps
 import os
@@ -57,29 +57,36 @@ def get_sqlite_path() -> Response:
     return jsonify({'error': '无效的数据库类型'})
 
 
-# 测试数据库连接
+# 测试数据库连接并保持配置
 @installRouter.route('/verification_db_conn', methods=['POST'])
 @Install_perssions
 def install_verification_db_conn() -> Response:
-    # {'db_type': '', 'db_host': '', 'db_port': '', 'db_name': '', 'db_user': '', 'db_password': '', 'db_prefix': 'lmoadll_', 'db_path': ''}
     data = request.get_json()
 
     if not data:
         return jsonify({'success': False, 'message': '请求的数据为空'})
 
-    # 你什么也做不到，也选择不了(不是)
+    # 处理SQLite数据库
     if data['db_type'] == 'sqlite':
-        result = sqlite_svdc(
-            data.get('db-prefix'),
-            data.get('db-path'),
-        )
+        # 获取SQLite相关参数
+        db_prefix = data.get('db_prefix', 'lmoadll_')
+        sql_sqlite_path = data.get('sql_sqlite_path')
+        
+        # 检查必要参数是否存在
+        if not sql_sqlite_path:
+            return jsonify({'success': False, 'message': 'SQLite数据库路径不能为空'})
+        
+        # 调用SQLite验证函数
+        result = sqlite_svdc(db_prefix, sql_sqlite_path)
 
         if result[0]:
-            return jsonify({'success': True, 'message': 'MySQL连接成功'})
+            return jsonify({'success': True, 'message': 'SQLite连接成功'})
         else:
             return jsonify(
                 {'success': False, 'message': f'数据库连接错误: {result[1]}'}
             )
+    
+    # 处理MySQL数据库
     elif data['db_type'] == 'mysql':
         result = mysql_svdc(
             data.get('db_host'),
@@ -95,7 +102,9 @@ def install_verification_db_conn() -> Response:
             return jsonify(
                 {'success': False, 'message': f'数据库连接错误: {result[1]}'}
             )
+    
+    # 处理未知数据库类型
     else:
         return jsonify(
-            {'success': False, 'message': f'数据类型本喵不认识 {data['db_type']}'}
+            {'success': False, 'message': f'数据类型本喵不认识 {data["db_type"]}'}
         )
