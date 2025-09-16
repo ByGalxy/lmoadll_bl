@@ -149,18 +149,9 @@
 </head>
 
 <body>
-
-
-    <!-- 主内容区 -->
     <div class="main-container">
         <div class="card" id="step-1">
             <h2>lmoadll_bl</h2>
-
-            <!--div class="section-title">安装说明</div>
-            <p class="license-text">
-                本安装程序将自动检测服务器环境是否符合配置要求。如果不符合，将在上方出现提示信息，请按照提示信息检查您的主机配置。如果服务器环境符合要求，将在下方出现"开始下一步"的按钮，点击该按钮即可一步完成安装。
-            </p-->
-
             <div class="section-title">许可协议</div>
             <p class="license-text">
                 lmoadll_bl 基于 GPL 协议发布，我们允许用户在 GPL 协议的范围内使用、拷贝、修改和分发程序。在 GPL 许可的范围内，您可以自由地将其用于商业以及非商业用途。
@@ -231,7 +222,7 @@
                     </div>
 
                     <div class="mb-3 text-start">
-                        <label for="db-path" class="form-label">数据库文件路径</label>
+                        <label for="sql_sqlite_path" class="form-label">数据库文件路径</label>
                         <input type="text" class="form-control" id="sql_sqlite_path" name="sql_sqlite_path"
                             placeholder="例如: /var/www/database/">
                         <div id="sqlite-path-note" class="form-text" style="display: none;"></div>
@@ -247,23 +238,26 @@
         </div>
 
         <div class="card" id="step-3" style="display: none;">
-            <h2>网站信息配置</h2>
-            <p>请输入您的网站信息：</p>
+            <h2>创建管理员账号</h2>
             <div class="mb-3 text-start">
                 <label for="site-name" class="form-label">网站名称</label>
-                <input type="text" class="form-control" id="site-name" placeholder="lmoadll_bl 平台">
+                <input type="text" class="form-control" id="site-name" placeholder="请输入网站名称">
             </div>
             <div class="mb-3 text-start">
                 <label for="site-url" class="form-label">网站 URL</label>
                 <input type="text" class="form-control" id="site-url" placeholder="https://example.com">
             </div>
             <div class="mb-3 text-start">
-                <label for="site-description" class="form-label">网站描述</label>
-                <textarea class="form-control" id="site-description" rows="3" placeholder="简要描述您的网站"></textarea>
+                <label for="admin-email" class="form-label">邮箱地址</label>
+                <input type="email" class="form-control" id="admin-email" placeholder="admin@example.com">
             </div>
             <div class="mb-3 text-start">
-                <label for="admin-email" class="form-label">管理员邮箱</label>
-                <input type="email" class="form-control" id="admin-email" placeholder="admin@example.com">
+                <label for="admin-username" class="form-label">用户名</label>
+                <input type="text" class="form-control" id="admin-username" placeholder="请输入用户名">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="admin-password" class="form-label">密码</label>
+                <input type="password" class="form-control" id="admin-password" placeholder="请输入密码">
             </div>
             <div class="btn-container">
                 <a href="#step-4" class="primary-btn" id="to-step-4">开始安装</a>
@@ -297,7 +291,6 @@
         const step3 = document.getElementById('step-3');
         const step4 = document.getElementById('step-4');
         const testDbBtn = document.getElementById('verificat_db_conn');
-        const toStep3Btn = document.getElementById('to-step-3');
         const toStep4Btn = document.getElementById('to-step-4');
         const steps = document.querySelectorAll('.step');
 
@@ -324,21 +317,14 @@
             }
             step1.style.display = 'none';
             step2.style.display = 'block';
-            steps[1].classList.add('active');
-        });
-
-        // 前往网站信息配置
-        toStep3Btn.addEventListener('click', () => {
-            step2.style.display = 'none';
-            step3.style.display = 'block';
-            steps[2].classList.add('active');
+            if (steps.length > 1) steps[1].classList.add('active');
         });
 
         // 开始安装
         toStep4Btn.addEventListener('click', () => {
             step3.style.display = 'none';
             step4.style.display = 'block';
-            steps[3].classList.add('active');
+            if (steps.length > 3) steps[3].classList.add('active');
             alert('安装成功！');
         });
     </script>
@@ -377,7 +363,7 @@
                         .then(data => {
                             if (data.path) {
                                 // 设置数据库路径输入框的值
-                                document.getElementById('db-path').value = data.path;
+                                document.getElementById('sql_sqlite_path').value = data.path;
                                 sqlitePathNote.textContent = '\'' + data.path + '\'' + ' 这个是系统自动生成的地址';
                                 sqlitePathNote.style.display = 'block';
                             } else if (data.error) {
@@ -424,7 +410,9 @@
                             alert('数据库连接成功!');
                             document.getElementById('step-2').style.display = 'none';
                             document.getElementById('step-3').style.display = 'block';
-                            document.querySelectorAll('.step')[2].classList.add('active');
+                            if (document.querySelectorAll('.step').length > 2) {
+                                document.querySelectorAll('.step')[2].classList.add('active');
+                            }
                         } else {
                             alert('数据库连接失败: ' + data.message);
                         }

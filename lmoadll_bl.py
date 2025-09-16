@@ -9,15 +9,17 @@ lmoadll_bl platform
 """
 
 from flask import Flask
-from install import installRouter
+import os
 
 app = Flask(__name__)
 
-app.register_blueprint(installRouter)
+if os.path.exists('install.py'):
+    from install import installRouter
+    app.register_blueprint(installRouter)
 
 @app.get('/')
 def root():
    return {'Status': 'OK'}
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8002, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=2324, debug=True, threaded=True)

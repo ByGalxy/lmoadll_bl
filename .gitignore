@@ -6,6 +6,7 @@ venv/
 *.pyc
 *.log
 *.zip
+*.db
 
 .env
 .idea

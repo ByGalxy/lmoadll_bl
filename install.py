@@ -2,7 +2,7 @@
 from flask import Blueprint, Response, send_file, request, jsonify, abort
 from var.lmoadll.sql.mysql.mysql import sc_verification_db_conn as mysql_svdc
 from var.lmoadll.sql.sqlite.sqlite import sc_verification_db_conn as sqlite_svdc
-from var.lmoadll.toml_config import Doesitexist_configtoml as dctoml
+from var.lmoadll.toml_config import Doesitexist_configtoml
 from functools import wraps
 import os
 import random
@@ -13,33 +13,33 @@ import string
 installRouter = Blueprint('install', __name__, url_prefix='/install')
 
 
-def Install_perssions(f):
+def install_permissions(f):
     @wraps(f)
     def per_install(*args, **kwargs):
-        if dctoml('server','install'):
-            return f(*args,**kwargs)
+        if Doesitexist_configtoml('server', 'install'):
+            return f(*args, **kwargs)
         else:
             return abort(404)
     return per_install
 
 
 @installRouter.route('/', methods=['GET'])
-@Install_perssions
+@install_permissions
 def install_index() -> Response | None:
     return send_file('install/base/install.html')
 
 
 # 判断是否有配置过数据库
 @installRouter.route('/check_database_configuration', methods=['POST'])
-@Install_perssions
-def check_database_configuration() -> Response:
-    if dctoml('db','sql_rd') == 'sqlite' and dctoml('db','sql_prefix') != '' and os.path.exists(dctoml('db','sql_sqlite_path')):
+@install_permissions
+def check_database_configuration() -> None:
+    if Doesitexist_configtoml('db','sql_rd') == 'sqlite' and Doesitexist_configtoml('db','sql_prefix') != '' and os.path.exists(Doesitexist_configtoml('db','sql_sqlite_path')):
         pass
 
 
 # 获取数据库路径, 自动生成路径and return
 @installRouter.route('/get_sqlite_path', methods=['POST'])
-@Install_perssions
+@install_permissions
 def get_sqlite_path() -> Response:
     data = request.get_json()
     db_type = data.get('db_type')
@@ -59,7 +59,7 @@ def get_sqlite_path() -> Response:
 
 # 测试数据库连接并保持配置
 @installRouter.route('/verification_db_conn', methods=['POST'])
-@Install_perssions
+@install_permissions
 def install_verification_db_conn() -> Response:
     data = request.get_json()
 
