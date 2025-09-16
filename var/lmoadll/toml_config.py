@@ -22,9 +22,24 @@ def Doesitexist_configtoml(a,b):
 
 # 检查键并写入配置文件
 def red_configtoml(a,b,c):
-    if Doesitexist_configtoml(a,b):
-        with open(config_path,'rb') as f:
-            config = tomllib.load(f)
-        config[a][b] = c
-        with open('config.toml', 'wb') as f:
+    # 检查配置文件是否存在, 不存在则创建新的配置文件和配置项
+    if not os.path.exists(config_path):
+        config = {a: {b: c}}
+        with open(config_path, 'wb') as f:
             tomli_w.dump(config, f)
+        return
+    
+    # 读取现有配置文件
+    with open(config_path, 'rb') as f:
+        config = tomllib.load(f)
+    
+    # 确保部分a存在
+    if a not in config:
+        config[a] = {}
+    
+    # 设置配置值
+    config[a][b] = c
+    
+    # 写回配置文件
+    with open(config_path, 'wb') as f:
+        tomli_w.dump(config, f)

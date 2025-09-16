@@ -238,7 +238,7 @@
         </div>
 
         <div class="card" id="step-3" style="display: none;">
-            <h2>创建管理员账号</h2>
+            <h2>创建超级管理员账号</h2>
             <div class="mb-3 text-start">
                 <label for="site-name" class="form-label">网站名称</label>
                 <input type="text" class="form-control" id="site-name" placeholder="请输入网站名称">
@@ -320,12 +320,62 @@
             if (steps.length > 1) steps[1].classList.add('active');
         });
 
+        // 存储数据库配置信息
+        let dbConfig = null;
+
         // 开始安装
         toStep4Btn.addEventListener('click', () => {
-            step3.style.display = 'none';
-            step4.style.display = 'block';
-            if (steps.length > 3) steps[3].classList.add('active');
-            alert('安装成功！');
+            // 获取表单数据
+            const siteName = document.getElementById('site-name').value;
+            const siteUrl = document.getElementById('site-url').value;
+            const adminEmail = document.getElementById('admin-email').value;
+            const adminUsername = document.getElementById('admin-username').value;
+            const adminPassword = document.getElementById('admin-password').value;
+
+            // 验证必填字段
+            if (!siteName || !siteUrl || !adminEmail || !adminUsername || !adminPassword) {
+                alert('请填写所有必填字段');
+                return;
+            }
+
+            // 构建请求数据
+            const requestData = {
+                site_name: siteName,
+                site_url: siteUrl,
+                superadministrator_email: adminEmail,
+                superadministrator_username: adminUsername,
+                superadministrator_password: adminPassword
+            };
+
+            // 添加数据库配置信息
+            if (dbConfig) {
+                Object.assign(requestData, dbConfig);
+            }
+
+            // 发送请求到后端
+            fetch('/install/create_admin_account', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 创建成功，跳转到完成页面
+                    step3.style.display = 'none';
+                    step4.style.display = 'block';
+                    if (steps.length > 3) steps[3].classList.add('active');
+                    alert(data.message);
+                } else {
+                    alert('创建失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('创建管理员账号时出错:', error);
+                alert('创建管理员账号时发生错误，请重试');
+            });
         });
     </script>
 
@@ -395,6 +445,9 @@
                     requestData.db_user = document.getElementById('db-user').value;
                     requestData.db_password = document.getElementById('db-password').value;
                 }
+
+                // 保存数据库配置信息
+                dbConfig = requestData;
 
                 // 发送验证请求到后端
                 fetch('/install/verification_db_conn', {
