@@ -14,6 +14,9 @@ import re
 
 
 
+__all__ = ['sc_verification_db_conn', 'check_superadmin_exists', 'get_user_by_username_or_email']
+
+
 # 创建数据库和表
 def sc_verification_db_conn(db_prefix, sql_sqlite_path):
     conn = None
@@ -54,6 +57,39 @@ def sc_verification_db_conn(db_prefix, sql_sqlite_path):
 
     except sqlite3.Error as e:
         return [False, e]
+    finally:
+        if conn:
+            conn.close()
+
+
+# 根据用户名或邮箱获取用户信息
+def get_user_by_username_or_email(db_prefix, sql_sqlite_path, username_or_email):
+    conn = None
+    try:
+        conn = sqlite3.connect(sql_sqlite_path)
+        cursor = conn.cursor()
+        
+        table_name = f'{db_prefix}users'
+        
+        # 查询用户信息
+        cursor.execute(f"SELECT uid, name, password, mail, `group` FROM {table_name} WHERE name = ? OR mail = ?", 
+                      (username_or_email, username_or_email))
+        user = cursor.fetchone()
+        
+        if user:
+            # 返回用户信息字典
+            return {
+                'uid': user[0],
+                'name': user[1],
+                'password': user[2],
+                'email': user[3],
+                'group': user[4]
+            }
+        return None
+        
+    except sqlite3.Error as e:
+        print(f"查询用户信息失败: {e}")
+        return None
     finally:
         if conn:
             conn.close()
