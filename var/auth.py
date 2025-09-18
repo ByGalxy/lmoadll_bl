@@ -4,11 +4,12 @@
 
 该模块提供用户登录功能, 包括用户验证、密码校验和JWT令牌生成.
 """
+
 from flask import Blueprint, request, jsonify
-from var.lmoadll.argon2_password import verify_password
-from var.lmoadll.token import create_jwt_token
-from var.lmoadll.toml_config import Doesitexist_configtoml
-from var.lmoadll.sql.sqlite.sqlite import get_user_by_username_or_email
+from var.argon2_password import verify_password
+from var.token import create_jwt_token
+from var.toml_config import Doesitexist_configtoml
+from var.sql.sqlite.sqlite import get_user_by_username_or_email
 
 
 

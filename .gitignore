@@ -8,6 +8,7 @@ __pycache__/
 *.pyc
 *.log
 *.zip
+*.7Z
 *.db
 
 .env

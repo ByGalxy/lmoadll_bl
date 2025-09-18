@@ -7,6 +7,7 @@ import tomli_w
 
 config_path = 'config.toml'
 
+
 # 检查配置文件是否存在并读取
 def Doesitexist_configtoml(a,b):
     if not os.path.exists(config_path):
@@ -19,6 +20,7 @@ def Doesitexist_configtoml(a,b):
             return False
         else:
             return config[a][b]
+
 
 # 检查键并写入配置文件
 def red_configtoml(a,b,c):

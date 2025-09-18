@@ -14,7 +14,6 @@ import secrets
 __all__ = ['init_jwt_manager', 'create_jwt_token', 'get_current_user_identity', 'jwt_required']
 
 
-
 """
 初始化JWT管理器
 初始化JWT管理器并配置JWT相关设置

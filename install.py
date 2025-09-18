@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, Response, send_file, request, jsonify, abort
-from var.lmoadll.sql.mysql.mysql import sc_verification_db_conn as mysql_svdc
-from var.lmoadll.sql.sqlite.sqlite import sc_verification_db_conn as sqlite_svdc
-from var.lmoadll.sql.sqlite.sqlite import check_superadmin_exists
-from var.lmoadll.toml_config import Doesitexist_configtoml, red_configtoml
-from var.lmoadll.argon2_password import hash_password
+from var.sql.mysql.mysql import sc_verification_db_conn as mysql_svdc
+from var.sql.sqlite.sqlite import sc_verification_db_conn as sqlite_svdc
+from var.sql.sqlite.sqlite import check_superadmin_exists
+from var.toml_config import Doesitexist_configtoml, red_configtoml
+from var.argon2_password import hash_password
 from functools import wraps
 import os
 import random

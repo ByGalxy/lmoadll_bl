@@ -7,7 +7,7 @@ usertype:
     - visitor / 访客
 """
 
-from var.lmoadll.toml_config import red_configtoml
+from var.toml_config import red_configtoml
 import sqlite3
 import os
 import re
