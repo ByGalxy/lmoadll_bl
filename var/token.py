@@ -2,11 +2,15 @@
 -*- coding: utf-8 -*-
 JWT Token 管理模块
 
-该模块提供JWT token的创建、验证和管理功能，
+该模块提供JWT token的创建、验证和管理功能,
 用于应用程序的用户认证和会话管理。
 """
 
+from flask import request
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+from flask_jwt_extended import verify_jwt_in_request
+from flask_jwt_extended import decode_token
+from datetime import timedelta
 import secrets
 
 
@@ -23,17 +27,13 @@ def init_jwt_manager(app):
     if not app.config.get('JWT_SECRET_KEY'):
         app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)
     
+    # 设置JWT令牌过期时间
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
+    
     # 创建JWT管理器实例
     jwt = JWTManager(app)
     
     # 可以在这里添加JWT相关的回调函数，例如token过期处理等
-    # @jwt.expired_token_loader
-    # def expired_token_callback(jwt_header, jwt_payload):
-    #     return jsonify({
-    #         'status': 401,
-    #         'sub_status': 42, 
-    #         'msg': '令牌已过期'
-    #     }), 401
     
     return jwt
 
@@ -64,7 +64,17 @@ def create_jwt_token(identity):
 def get_current_user_identity():
     
     try:
-        return get_jwt_identity()
+        # 尝试从cookie中获取令牌
+        access_token = request.cookies.get('access_token')
+        
+        if not access_token:
+            # 如果cookie中没有令牌，尝试使用verify_jwt_in_request作为备选方案
+            verify_jwt_in_request(optional=True)
+            return get_jwt_identity()
+
+        # 解码令牌获取身份信息
+        decoded_token = decode_token(access_token)
+        return decoded_token.get('sub')
     except Exception as e:
         print(f"获取用户身份失败: {e}")
         return None

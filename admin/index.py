@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint, send_file
+from flask import Blueprint, send_file, Response
+from var.OAuth import login_required
 
 
 
@@ -7,5 +8,6 @@ adminRouter = Blueprint('admin', __name__, url_prefix='/admin')
 
 
 @adminRouter.route('/', methods=['GET'])
-def admin_index() -> dict[str, str]:
+@login_required
+def admin_index() -> Response:
     return send_file('admin/index.html')

@@ -264,6 +264,20 @@
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
             
+            // 从URL查询参数中获取返回页面路径
+            function getRedirectUrl() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirect = urlParams.get('redirect');
+                // 确保返回的URL是安全的（只允许本站URL）
+                if (redirect && (redirect.startsWith('/') && !redirect.startsWith('//'))) {
+                    return redirect;
+                }
+                return '/'; // 默认重定向到根路径
+            }
+            
+            // 获取登录前的原始页面路径
+            const redirectUrl = getRedirectUrl();
+            
             // 切换密码可见性
             togglePasswordButton.addEventListener('click', function() {
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -297,7 +311,7 @@
                 setLoading(true);
                 
                 // 使用fetch API发送登录请求
-                fetch('/lauth/login', {
+                fetch('/OAuth/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -326,17 +340,8 @@
                     setLoading(false);
                     
                     if (data.code === 200) {
-                        // 登录成功，保存令牌和用户信息
-                        if (data.access_token) {
-                            // 可以将令牌存储在 localStorage 或 sessionStorage 中
-                            localStorage.setItem('access_token', data.access_token);
-                            if (data.user_info) {
-                                localStorage.setItem('user_info', JSON.stringify(data.user_info));
-                            }
-                        }
-                        
-                        // 跳转到首页或管理页面
-                        window.location.href = '/';
+                        // 登录成功，重定向到原始页面或默认页面
+                        window.location.href = redirectUrl;
                     } else {
                         showError(data.message || '登录失败，请重试');
                     }

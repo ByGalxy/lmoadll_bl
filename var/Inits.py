@@ -25,7 +25,7 @@ def Init_module(app):    # 初始化JWT管理器
     if os.path.exists('./admin'):
         from admin.index import adminRouter
         from admin.login import loginRouter
-        from var.auth import authRouter
+        from var.OAuth import authRouter
         app.register_blueprint(adminRouter)
         app.register_blueprint(loginRouter)
         app.register_blueprint(authRouter)
