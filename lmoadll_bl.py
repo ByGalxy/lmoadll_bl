@@ -15,7 +15,6 @@ from var.Inits import Init_module
 
 app = Flask(__name__)
 
-# 初始化所有模块
 Init_module(app)
 
 
