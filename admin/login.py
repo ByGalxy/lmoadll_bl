@@ -8,4 +8,4 @@ loginRouter = Blueprint('login', __name__, url_prefix='/login')
 
 @loginRouter.route('/')
 def login_page():
-    return send_file('./admin/login.html')
+    return send_file('./admin/base/login.html')

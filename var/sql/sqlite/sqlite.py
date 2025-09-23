@@ -8,13 +8,14 @@ usertype:
 """
 
 from var.toml_config import red_configtoml
+from var.toml_config import Doesitexist_configtoml
 import sqlite3
 import os
 import re
 
 
 
-__all__ = ['sc_verification_db_conn', 'check_superadmin_exists', 'get_user_by_username_or_email']
+__all__ = ['sc_verification_db_conn', 'check_superadmin_exists', 'get_user_by_username_or_email', 'get_user_role_by_identity', 'get_user_count', 'get_user_name_by_identity']
 
 
 # 创建数据库和表
@@ -126,3 +127,50 @@ def check_superadmin_exists(db_prefix, sql_sqlite_path, admin_username, admin_em
     finally:
         if conn:
             conn.close()
+
+# 通过用户的uid查找用户的身份权限
+def get_user_role_by_identity(user_identity):
+    db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
+    sql_sqlite_path = Doesitexist_configtoml('db', 'sql_sqlite_path')
+    if not db_prefix or not sql_sqlite_path:
+        print("数据库配置缺失")
+        return [False, "数据库配置缺失"]
+    conn = sqlite3.connect(sql_sqlite_path)
+    cursor = conn.cursor()
+    table_name = f'{db_prefix}users'
+    cursor.execute(f"SELECT `group` FROM {table_name} WHERE uid = ?", (user_identity,))
+    user_group = cursor.fetchone()
+    conn.close()
+    return user_group # 期望返回,如: ('superadministrator',)
+
+
+# 通过用户的uid查找用户名
+def get_user_name_by_identity(user_identity):
+    db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
+    sql_sqlite_path = Doesitexist_configtoml('db', 'sql_sqlite_path')
+    if not db_prefix or not sql_sqlite_path:
+        print("数据库配置缺失")
+        return [False, "数据库配置缺失"]
+    conn = sqlite3.connect(sql_sqlite_path)
+    cursor = conn.cursor()
+    table_name = f'{db_prefix}users'
+    cursor.execute(f"SELECT name FROM {table_name} WHERE uid = ?", (user_identity,))
+    user_name = cursor.fetchone()
+    conn.close()
+    return user_name # 期望返回,如: ('admin',)
+
+
+# 获取用户数量
+def get_user_count():
+    db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
+    sql_sqlite_path = Doesitexist_configtoml('db', 'sql_sqlite_path')
+    if not db_prefix or not sql_sqlite_path:
+        print("数据库配置缺失")
+        return [False, "数据库配置缺失"]
+    conn = sqlite3.connect(sql_sqlite_path)
+    cursor = conn.cursor()
+    table_name = f'{db_prefix}users'
+    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+    user_count = cursor.fetchone()[0]
+    conn.close()
+    return user_count

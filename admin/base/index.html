@@ -5,34 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>后台管理 - Lmoadll</title>
     <style>
-        /* 全局样式 */
         :root {
-            /* 主题颜色 */
-            --primary-color: #6366f1;
-            --primary-hover: #4f46e5;
-            --secondary-color: #818cf8;
-            --text-color: #1f2937;
-            --text-secondary: #6b7280;
-            --bg-color: #f9fafb;
-            --card-bg: #ffffff;
-            --error-color: #ef4444;
-            --success-color: #10b981;
-            --border-color: #e5e7eb;
-            --sidebar-bg: #1f2937;
-            --sidebar-text: #f9fafb;
-            --sidebar-hover: #374151;
-            --sidebar-active: #4f46e5;
+            --primary-blue: #1DA1F2;
+            --blue-hover: #1a91da;
+            --blue-disabled: #9bd1f9;
+            --background: #ffffff;
+            --secondary-bg: #f7f9fa;
+            --border-color: #eff3f4;
+            --text-primary: #0f1419;
+            --text-secondary: #536471;
+            --text-muted: #8b98a5;
+            --error-red: #f91880;
+            --success-green: #00ba7c;
             
             /* 阴影 */
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            
-            /* 圆角 */
-            --radius-sm: 0.25rem;
-            --radius-md: 0.375rem;
-            --radius-lg: 0.5rem;
-            --radius-xl: 0.75rem;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 3px 10px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.1);
             
             /* 间距 */
             --spacing-xs: 0.25rem;
@@ -49,6 +38,13 @@
             --font-xl: 1.25rem;
             --font-2xl: 1.5rem;
             
+            /* 圆角 */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+            --radius-full: 9999px;
+            
             /* 过渡 */
             --transition-fast: 0.15s ease;
             --transition-normal: 0.25s ease;
@@ -62,47 +58,76 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
             line-height: 1.5;
             display: flex;
             min-height: 100vh;
             overflow-x: hidden;
         }
         
-        /* 侧边栏 */
+        /* 侧边栏 - 推特风格 */
         .sidebar {
             width: 240px;
-            background-color: var(--sidebar-bg);
-            color: var(--sidebar-text);
-            height: 100vh;
+            background-color: var(--background);
+            color: var(--text-primary);
+            height: calc(100vh - 72px); /* 减去顶部导航栏高度 */
             position: fixed;
-            top: 0;
+            top: 72px; /* 顶部导航栏高度 */
             left: 0;
             transition: transform var(--transition-normal);
             z-index: 100;
             overflow-y: auto;
             padding: var(--spacing-lg) 0;
+            border-right: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        /* 侧边栏激活状态 - 所有屏幕尺寸下都有效 */
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        
+        /* 默认情况下，在大屏幕上侧边栏是展开的 */
+        @media (min-width: 1025px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 240px;
+            }
+            
+            /* 大屏幕下侧边栏折叠状态 */
+            .sidebar:not(.active) {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar:not(.active) ~ .main-content {
+                margin-left: 0;
+            }
+            
+            /* 确保切换按钮在大屏幕上始终可见 */
+            .toggle-sidebar {
+                position: relative;
+                z-index: 200;
+            }
         }
         
         .sidebar-header {
             padding: 0 var(--spacing-lg) var(--spacing-xl);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border-color);
         }
         
         .sidebar-logo {
             font-size: var(--font-2xl);
             font-weight: 700;
-            color: var(--sidebar-text);
+            color: var(--primary-blue);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: var(--spacing-sm);
-        }
-        
-        .sidebar-logo i {
-            color: var(--primary-color);
         }
         
         .sidebar-menu {
@@ -114,7 +139,7 @@
             font-size: var(--font-xs);
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: rgba(255, 255, 255, 0.5);
+            color: var(--text-muted);
             margin-bottom: var(--spacing-sm);
             padding: 0 var(--spacing-md);
         }
@@ -127,25 +152,20 @@
             display: flex;
             align-items: center;
             padding: var(--spacing-md);
-            border-radius: var(--radius-md);
-            color: var(--sidebar-text);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
             text-decoration: none;
             transition: all var(--transition-fast);
+            font-weight: 500;
         }
         
         .menu-link:hover {
-            background-color: var(--sidebar-hover);
+            background-color: var(--secondary-bg);
         }
         
         .menu-link.active {
-            background-color: var(--sidebar-active);
-        }
-        
-        .menu-link i {
-            margin-right: var(--spacing-md);
-            font-size: var(--font-lg);
-            width: 24px;
-            text-align: center;
+            color: var(--primary-blue);
+            background-color: rgba(29, 161, 242, 0.1);
         }
         
         /* 主内容区 */
@@ -154,17 +174,23 @@
             margin-left: 240px;
             display: flex;
             flex-direction: column;
+            position: relative;
+            z-index: 20;
         }
         
-        /* 顶部导航栏 */
+        /* 顶部导航栏 - 推特风格 */
         .navbar {
-            background-color: var(--card-bg);
+            background-color: var(--background);
             padding: var(--spacing-md) var(--spacing-xl);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 150;
+            height: 72px;
         }
         
         .navbar-left {
@@ -177,15 +203,20 @@
             background: none;
             border: none;
             font-size: var(--font-xl);
-            color: var(--text-color);
+            color: var(--text-primary);
             cursor: pointer;
             padding: var(--spacing-sm);
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-full);
             transition: background-color var(--transition-fast);
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .toggle-sidebar:hover {
-            background-color: var(--bg-color);
+            background-color: var(--secondary-bg);
         }
         
         .navbar-right {
@@ -200,19 +231,19 @@
             gap: var(--spacing-sm);
             cursor: pointer;
             padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-full);
             transition: background-color var(--transition-fast);
         }
         
         .user-profile:hover {
-            background-color: var(--bg-color);
+            background-color: var(--secondary-bg);
         }
         
         .user-avatar {
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background-color: var(--primary-color);
+            background-color: var(--primary-blue);
             color: white;
             display: flex;
             align-items: center;
@@ -232,23 +263,23 @@
         }
         
         .user-name {
-            font-weight: 500;
+            font-weight: 700;
             font-size: var(--font-sm);
         }
         
-        .user-role {
+        .user-identity {
             font-size: var(--font-xs);
             color: var(--text-secondary);
         }
         
         .logout-btn {
-            background-color: var(--error-color);
-            color: white;
-            border: none;
+            background-color: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
             padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-full);
             font-size: var(--font-sm);
-            font-weight: 500;
+            font-weight: 700;
             cursor: pointer;
             transition: all var(--transition-fast);
             display: flex;
@@ -257,7 +288,8 @@
         }
         
         .logout-btn:hover {
-            background-color: #dc2626;
+            background-color: rgba(249, 24, 128, 0.1);
+            color: var(--error-red);
         }
         
         /* 页面内容 */
@@ -272,7 +304,7 @@
         
         .page-title {
             font-size: var(--font-2xl);
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: var(--spacing-sm);
         }
         
@@ -283,11 +315,12 @@
         
         /* 卡片 */
         .card {
-            background-color: var(--card-bg);
+            background-color: var(--background);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-md);
             padding: var(--spacing-lg);
             margin-bottom: var(--spacing-xl);
+            border: 1px solid var(--border-color);
         }
         
         .card-header {
@@ -301,7 +334,7 @@
         
         .card-title {
             font-size: var(--font-xl);
-            font-weight: 600;
+            font-weight: 800;
         }
         
         .card-actions {
@@ -309,7 +342,7 @@
             gap: var(--spacing-sm);
         }
         
-        /* 数据概览卡片 */
+        /* 数据概览卡片 - 推特风格 */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -318,11 +351,12 @@
         }
         
         .stat-card {
-            background-color: var(--card-bg);
+            background-color: var(--background);
             border-radius: var(--radius-lg);
             padding: var(--spacing-lg);
             box-shadow: var(--shadow-md);
             transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            border: 1px solid var(--border-color);
         }
         
         .stat-card:hover {
@@ -336,66 +370,23 @@
             align-items: flex-start;
             margin-bottom: var(--spacing-md);
         }
-        
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: var(--font-2xl);
-            color: white;
-        }
-        
-        .stat-icon.primary {
-            background-color: var(--primary-color);
-        }
-        
-        .stat-icon.secondary {
-            background-color: var(--secondary-color);
-        }
-        
-        .stat-icon.success {
-            background-color: var(--success-color);
-        }
-        
-        .stat-icon.warning {
-            background-color: #f59e0b;
-        }
-        
+
         .stat-title {
             color: var(--text-secondary);
             font-size: var(--font-sm);
+            font-weight: 500;
         }
         
         .stat-value {
             font-size: var(--font-2xl);
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: var(--spacing-xs);
         }
         
-        .stat-change {
-            font-size: var(--font-xs);
-            font-weight: 500;
-        }
-        
-        .stat-change.positive {
-            color: var(--success-color);
-        }
-        
-        .stat-change.negative {
-            color: var(--error-color);
-        }
-        
-        /* 响应式设计 */
+        /* 响应式设计 - 小屏幕设备 */
         @media (max-width: 1024px) {
             .sidebar {
                 transform: translateX(-100%);
-            }
-            
-            .sidebar.active {
-                transform: translateX(0);
             }
             
             .main-content {
@@ -411,13 +402,17 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .navbar {
+                padding: var(--spacing-md);
+            }
         }
         
         /* 加载动画 */
         .spinner {
             border: 2px solid rgba(0, 0, 0, 0.1);
             border-radius: 50%;
-            border-top: 2px solid var(--primary-color);
+            border-top: 2px solid var(--primary-blue);
             width: 16px;
             height: 16px;
             animation: spin 1s linear infinite;
@@ -428,12 +423,12 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* 按钮样式 */
+        /* 按钮样式 - 推特风格 */
         .btn {
             padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-full);
             font-size: var(--font-sm);
-            font-weight: 500;
+            font-weight: 700;
             border: none;
             cursor: pointer;
             transition: all var(--transition-fast);
@@ -443,33 +438,37 @@
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
+            background-color: var(--primary-blue);
             color: white;
         }
         
         .btn-primary:hover {
-            background-color: var(--primary-hover);
+            background-color: var(--blue-hover);
         }
         
         .btn-secondary {
-            background-color: var(--text-secondary);
-            color: white;
+            background-color: var(--secondary-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
         }
         
         .btn-secondary:hover {
-            background-color: #4b5563;
+            background-color: #e6e7e7;
         }
         
+        /* 推特风格元素 */
+        .divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: var(--spacing-md) 0;
+        }
     </style>
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
     <!-- 侧边栏 -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a href="/admin" class="sidebar-logo">
-                <span class="material-icons">dashboard</span>
                 Lmoadll
             </a>
         </div>
@@ -483,29 +482,31 @@
             </div>
             <div class="menu-item">
                 <a href="#" class="menu-link">
-                    系统设置
+                    测试1
                 </a>
             </div>
             <div class="menu-item">
                 <a href="#" class="menu-link">
-                    用户管理
+                    测试2
                 </a>
             </div>
             <div class="menu-item">
                 <a href="#" class="menu-link">
-                    内容管理
+                    测试3
                 </a>
             </div>
             <div class="menu-item">
                 <a href="#" class="menu-link">
-                    统计报表
+                    测试4
                 </a>
             </div>
+            
+            <div class="divider"></div>
             
             <div class="menu-title">其他</div>
             <div class="menu-item">
                 <a href="#" class="menu-link">
-                    帮助文档
+                    测试5
                 </a>
             </div>
         </div>
@@ -517,7 +518,7 @@
         <nav class="navbar">
             <div class="navbar-left">
                 <button class="toggle-sidebar" id="toggleSidebar">
-                    <span class="material-icons">menu</span>
+                    ☰
                 </button>
             </div>
             
@@ -525,13 +526,12 @@
                 <div class="user-profile">
                     <div class="user-avatar">A</div>
                     <div class="user-info">
-                        <div class="user-name">管理员</div>
-                        <div class="user-role">超级管理员</div>
+                        <div class="user-name">......</div>
+                        <div class="user-identity">......</div>
                     </div>
                 </div>
                 
                 <button id="logoutButton" class="logout-btn">
-                    <span class="material-icons">logout</span>
                     退出登录
                 </button>
             </div>
@@ -550,63 +550,8 @@
                     <div class="stat-card-header">
                         <div>
                             <div class="stat-title">总用户数</div>
-                            <div class="stat-value">1,258</div>
+                            <div class="stat-value">......</div>
                         </div>
-                        <div class="stat-icon primary">
-                            <span class="material-icons">person</span>
-                        </div>
-                    </div>
-                    <div class="stat-change positive">
-                        <span class="material-icons">arrow_upward</span>
-                        12% 较上月
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <div>
-                            <div class="stat-title">今日访问量</div>
-                            <div class="stat-value">246</div>
-                        </div>
-                        <div class="stat-icon secondary">
-                            <span class="material-icons">visibility</span>
-                        </div>
-                    </div>
-                    <div class="stat-change positive">
-                        <span class="material-icons">arrow_upward</span>
-                        8% 较昨日
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <div>
-                            <div class="stat-title">活跃会话</div>
-                            <div class="stat-value">36</div>
-                        </div>
-                        <div class="stat-icon success">
-                            <span class="material-icons">wifi</span>
-                        </div>
-                    </div>
-                    <div class="stat-change positive">
-                        <span class="material-icons">arrow_upward</span>
-                        5% 较上小时
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <div>
-                            <div class="stat-title">系统状态</div>
-                            <div class="stat-value">正常</div>
-                        </div>
-                        <div class="stat-icon warning">
-                            <span class="material-icons">check_circle</span>
-                        </div>
-                    </div>
-                    <div class="stat-change positive">
-                        <span class="material-icons">update</span>
-                        最近检查: 2分钟前
                     </div>
                 </div>
             </div>
@@ -629,6 +574,7 @@
             logoutButton.addEventListener('click', function() {
                 if (confirm('确定要退出登录吗？')) {
                     // 显示加载状态
+                    const originalText = logoutButton.textContent;
                     logoutButton.innerHTML = '<div class="spinner"></div> 退出中...';
                     logoutButton.disabled = true;
                     
@@ -645,7 +591,7 @@
                         } else {
                             alert('登出失败：' + (data.message || '未知错误'));
                             // 恢复按钮状态
-                            logoutButton.innerHTML = '<span class="material-icons">logout</span> 退出登录';
+                            logoutButton.textContent = originalText;
                             logoutButton.disabled = false;
                         }
                     })
@@ -653,7 +599,7 @@
                         console.error('登出请求失败:', error);
                         alert('登出请求失败，请稍后重试');
                         // 恢复按钮状态
-                        logoutButton.innerHTML = '<span class="material-icons">logout</span> 退出登录';
+                        logoutButton.textContent = originalText;
                         logoutButton.disabled = false;
                     });
                 }
@@ -662,11 +608,78 @@
             // 更新服务器时间显示
             function updateServerTime() {
                 const now = new Date();
-                document.getElementById('serverTime').textContent = now.toLocaleString('zh-CN');
+                const serverTimeElement = document.getElementById('serverTime');
+                if (serverTimeElement) {
+                    serverTimeElement.textContent = now.toLocaleString('zh-CN');
+                }
+            }
+            
+            // 获取并更新用户数量
+            function updateUserCount() {
+                fetch('/admin/user_count', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                })
+                .then(response => response.text())
+                .then(count => {
+                    // 将数字转换为格式化的字符串（添加千位分隔符）
+                    const formattedCount = parseInt(count).toLocaleString();
+                    // 更新页面上的用户数显示，只选择第一个统计卡片中的总用户数
+                    const userCountElement = document.querySelector('.stat-card:first-child .stat-value');
+                    if (userCountElement) {
+                        userCountElement.textContent = formattedCount;
+                    }
+                })
+                .catch(error => {
+                    console.error('获取用户数量失败:', error);
+                });
+            }
+            
+            // 获取并更新管理员用户名
+            function updateAdminName() {
+                fetch('/admin/get_admin_name', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                })
+                .then(response => response.text())
+                .then(name => {
+                    // 更新页面上的用户名称显示
+                    const userNameElement = document.querySelector('.user-name');
+                    if (userNameElement) {
+                        userNameElement.textContent = name !== 'Unknown' ? name : '管理员';
+                    }
+                })
+                .catch(error => {
+                    console.error('获取管理员名称失败:', error);
+                });
+            }
+
+            // 获取并更新管理员身份
+            function updateAdminIdentity() {
+                fetch('/admin/get_admin_identity', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                })
+                .then(response => response.text())
+                .then(identity => {
+                    // 更新页面上的用户身份显示
+                    const userIdentityElement = document.querySelector('.user-identity');
+                    if (userIdentityElement) {
+                        userIdentityElement.textContent = identity !== 'Unknown' ? identity : '管理员';
+                    }
+                })
+                .catch(error => {
+                    console.error('获取管理员身份失败:', error);
+                });
             }
             
             updateServerTime();
             setInterval(updateServerTime, 1000);
+            
+            // 页面加载后获取用户数量、管理员名称和管理员身份
+            updateUserCount();
+            updateAdminName();
+            updateAdminIdentity();
             
             // 处理响应式布局
             function handleResize() {

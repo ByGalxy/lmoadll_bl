@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - Lmoadll</title>
+    <title>登录</title>
     <style>
         /* 全局样式 */
         :root {
-            /* 主题颜色 */
-            --primary-color: #6366f1;
-            --primary-hover: #4f46e5;
-            --secondary-color: #818cf8;
-            --text-color: #1f2937;
-            --text-secondary: #6b7280;
-            --bg-color: #f9fafb;
-            --card-bg: #ffffff;
-            --error-color: #ef4444;
-            --success-color: #10b981;
-            --border-color: #e5e7eb;
+            /* 紫色主题颜色 */
+            --primary-color: #8B5CF6;
+            --primary-hover: #7C3AED;
+            --secondary-color: #A78BFA;
+            --text-color: #1F2937;
+            --text-secondary: #6B7280;
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --error-color: #EF4444;
+            --success-color: #10B981;
+            --border-color: #E5E7EB;
             
             /* 阴影 */
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -38,7 +38,7 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.5;
@@ -51,11 +51,12 @@
         
         .login-container {
             width: 100%;
-            max-width: 425px;
+            max-width: 400px;
             background-color: var(--card-bg);
             border-radius: var(--radius-xl);
             box-shadow: var(--shadow-lg);
-            padding: 2.5rem;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
         }
         
         .login-header {
@@ -64,10 +65,11 @@
         }
         
         .login-title {
-            font-size: 1.875rem;
+            font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
             color: var(--text-color);
+            letter-spacing: -0.025em;
         }
         
         .login-subtitle {
@@ -100,7 +102,7 @@
         .form-input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
         }
         
         .form-input::placeholder {
@@ -118,6 +120,17 @@
             transform: translateY(-50%);
             cursor: pointer;
             color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: none;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+        }
+        
+        .toggle-password:hover {
+            background-color: rgba(139, 92, 246, 0.1);
+            color: var(--primary-color);
         }
         
         .submit-button {
@@ -128,13 +141,10 @@
             border: none;
             border-radius: var(--radius-md);
             font-size: 0.875rem;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
+            margin-top: 0.5rem;
         }
         
         .submit-button:hover:not(:disabled) {
@@ -185,6 +195,7 @@
             font-size: 0.75rem;
             text-decoration: none;
             transition: color 0.2s ease;
+            font-weight: 500;
         }
         
         .helper-link:hover {
@@ -192,14 +203,30 @@
             text-decoration: underline;
         }
         
-        /* 响应式设计 */
+        /* 窄屏优化 */
         @media (max-width: 480px) {
             .login-container {
                 padding: 1.5rem;
+                max-width: 340px;
             }
             
             .login-title {
-                font-size: 1.5rem;
+                font-size: 1.25rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .login-container {
+                padding: 1.25rem;
+                max-width: 300px;
+            }
+            
+            .login-title {
+                font-size: 1.125rem;
+            }
+            
+            .login-subtitle {
+                font-size: 0.8125rem;
             }
         }
     </style>
@@ -208,7 +235,7 @@
     <div class="login-container">
         <div class="login-header">
             <h1 class="login-title">欢迎回来</h1>
-            <p class="login-subtitle">请输入您的账号信息进行登录</p>
+            <p class="login-subtitle">登录您的账户继续</p>
         </div>
         
         <div class="error-message" id="errorMessage">
@@ -237,7 +264,7 @@
                         placeholder="请输入密码"
                         required
                     >
-                    <span class="toggle-password" id="togglePassword">👁️</span>
+                    <button type="button" class="toggle-password" id="togglePassword">显示</button>
                 </div>
             </div>
             
@@ -279,10 +306,12 @@
             const redirectUrl = getRedirectUrl();
             
             // 切换密码可见性
+            let passwordVisible = false;
             togglePasswordButton.addEventListener('click', function() {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordVisible = !passwordVisible;
+                const type = passwordVisible ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
-                togglePasswordButton.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
+                togglePasswordButton.textContent = passwordVisible ? '隐藏' : '显示';
             });
             
             // 表单提交处理
@@ -368,7 +397,7 @@
                 loginButton.disabled = isLoading;
                 
                 if (isLoading) {
-                    buttonText.textContent = '登录中';
+                    buttonText.textContent = '登录中...';
                     buttonSpinner.style.display = 'inline-block';
                 } else {
                     buttonText.textContent = '登录';
