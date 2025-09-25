@@ -3,6 +3,7 @@
 .venv/
 .idea/
 venv/
+themes/
 __pycache__/
 
 *.pyc

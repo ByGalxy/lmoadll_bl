@@ -1,11 +1,2 @@
 [server]
-install = false
-
-[db]
-sql_rd = "sqlite"
-sql_prefix = "lmoadll_"
-sql_sqlite_path = "E:\\Windows\\Documents\\AWorkAndProjects\\python\\web\\lmoadll_bl\\usr\\5f6etuzvv3.db"
-
-[site]
-name = "123"
-url = "http://127.0.0.1:2324/"
+install = true

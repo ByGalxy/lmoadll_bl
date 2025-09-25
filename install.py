@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, Response, send_file, request, jsonify, abort
-from var.sql.mysql.mysql import sc_verification_db_conn as mysql_svdc
-from var.sql.sqlite.sqlite import sc_verification_db_conn as sqlite_svdc
-from var.sql.sqlite.sqlite import check_superadmin_exists
+from var.sql.sqlite.sqlite import check_superadmin_exists, get_or_set_site_option
 from var.toml_config import Doesitexist_configtoml, red_configtoml
 from var.argon2_password import hash_password
+from var.sql.mysql.mysql import sc_verification_db_conn as mysql_svdc
+from var.sql.sqlite.sqlite import sc_verification_db_conn as sqlite_svdc
 from functools import wraps
 import os
 import random
@@ -132,11 +132,7 @@ def create_admin_account() -> Response:
         if not hashed_password:
             return jsonify({'success': False, 'message': '密码加密失败'})
 
-        # 保存网站配置
-        red_configtoml('site', 'name', site_name)
-        red_configtoml('site', 'url', site_url)
-        
-        # 保存数据库配置（从之前的请求中获取）
+        # 获取并保存数据库配置
         db_type = data.get('db_type')
         if db_type == 'sqlite':
             red_configtoml('db', 'sql_rd', 'sqlite')
@@ -144,6 +140,10 @@ def create_admin_account() -> Response:
             red_configtoml('db', 'sql_prefix', db_prefix)
             sql_sqlite_path = data.get('sql_sqlite_path')
             red_configtoml('db', 'sql_sqlite_path', sql_sqlite_path)
+            
+            # 保存网站配置到数据库
+            get_or_set_site_option(db_prefix, sql_sqlite_path, 'site_name', site_name)
+            get_or_set_site_option(db_prefix, sql_sqlite_path, 'site_url', site_url)
             
             # 在数据库中创建超级管理员账号
             result = check_superadmin_exists(
