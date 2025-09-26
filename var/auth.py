@@ -14,7 +14,7 @@ from var.sql.sqlite.sqlite import get_user_by_username_or_email
 
 
 
-authRouter = Blueprint('OAuth', __name__, url_prefix='/OAuth')
+authRouter = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 """
@@ -44,7 +44,7 @@ def login_required(f):
 处理登录请求, 验证用户凭据并生成JWT令牌
 
 请求格式：
-POST /OAuth/login
+POST /auth/login
 {
     "username_or_email": "用户输入的用户名或邮箱",
     "password": "用户输入的密码"
@@ -113,7 +113,7 @@ def login_api():
 
 
 """
-POST /OAuth/logout
+POST /auth/logout
 处理登出请求
 注意: JWT是无状态的, 客户端应该删除存储的令牌
 JWT是无状态的, 服务器端不需要特殊处理

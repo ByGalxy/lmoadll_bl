@@ -9,18 +9,11 @@ lmoadll_bl platform
 """
 
 from flask import Flask
-from flask import send_from_directory
 from var.Inits import Init_module
 
 
 
 app = Flask(__name__)
-
-
-@app.route('/asses/css/<path:filename>')
-def serve_css(filename):
-    return send_from_directory('admin/asses/css', filename)
-
 
 Init_module(app)
 

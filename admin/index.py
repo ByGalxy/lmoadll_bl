@@ -50,6 +50,12 @@ def admin_index() -> Response:
     return send_file('admin/base/index.html')
 
 
+@adminRouter.route('/options-general', methods=['GET'])
+@admin_required
+def admin_options_general() -> Response:
+    return send_file('admin/base/options-general.html')
+
+
 # get user count
 @adminRouter.route('/user_count', methods=['POST'])
 @admin_required

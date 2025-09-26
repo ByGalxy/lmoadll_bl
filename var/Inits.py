@@ -16,7 +16,7 @@ def Init_module(app):    # 初始化JWT管理器
     except Exception as e:
         print(f'初始化JWT管理器失败: {e}')
 
-    # 注册安装路由
+    # 注册install路由
     if os.path.exists('install.py'):
         from install import installRouter
         app.register_blueprint(installRouter)
@@ -25,7 +25,12 @@ def Init_module(app):    # 初始化JWT管理器
     if os.path.exists('./admin'):
         from admin.index import adminRouter
         from admin.login import loginRouter
-        from var.OAuth import authRouter
+        from var.auth import authRouter
         app.register_blueprint(adminRouter)
         app.register_blueprint(loginRouter)
         app.register_blueprint(authRouter)
+
+    # 注册var路由
+    if os.path.exists('./var'):
+        from var.asses import assersRouter
+        app.register_blueprint(assersRouter)
