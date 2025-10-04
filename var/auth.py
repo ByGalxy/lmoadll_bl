@@ -99,12 +99,12 @@ def login_api():
         # 当token过期时，用户需要重新登录，新生成的token会自动覆盖旧token
         response.set_cookie(
             'access_token', 
-            access_token, 
-            httponly=True, 
-            secure=True,  # 开发环境可以设为False，生产环境应设为True
+            access_token,
+            httponly=True,
+            secure=True,# 开发环境可以设为False，生产环境应设为True
             samesite='Lax'
         )
-        
+
         return response, 200
         
     except Exception as e:

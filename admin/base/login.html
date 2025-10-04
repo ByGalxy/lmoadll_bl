@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - 管理后台</title>
-    <link rel="stylesheet" href="/asses/css/style.css">
+    <title>后台管理系统 - 登录</title>
+    <link rel="stylesheet" href="../asses/css/admin.css">
     <style>
         body {
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 1rem;
+            background-color: #F5F8FA;
+            padding: 20px;
         }
     </style>
 </head>
@@ -28,12 +29,12 @@
         
         <form id="loginForm">
             <div class="form-group">
-                <label for="username_or_email" class="form-label">用户名或邮箱</label>
+                <label for="username_or_email" class="form-label">邮箱</label>
                 <input 
                     type="text" 
                     id="username_or_email" 
                     class="form-input" 
-                    placeholder="请输入用户名或邮箱"
+                    placeholder="请输入邮箱"
                     required
                 >
             </div>
@@ -74,20 +75,6 @@
             const buttonSpinner = document.getElementById('buttonSpinner');
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
-            
-            // 从URL查询参数中获取返回页面路径
-            function getRedirectUrl() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const redirect = urlParams.get('redirect');
-                // 确保返回的URL是安全的（只允许本站URL）
-                if (redirect && (redirect.startsWith('/') && !redirect.startsWith('//'))) {
-                    return redirect;
-                }
-                return '/'; // 默认重定向到根路径
-            }
-            
-            // 获取登录前的原始页面路径
-            const redirectUrl = getRedirectUrl();
             
             // 切换密码可见性
             let passwordVisible = false;
@@ -153,8 +140,8 @@
                     setLoading(false);
                     
                     if (data.code === 200) {
-                        // 登录成功，重定向到原始页面或默认页面
-                        window.location.href = redirectUrl;
+                        // 登录成功，刷新当前页面
+                        window.location.reload();
                     } else {
                         showError(data.message || '登录失败，请重试');
                     }

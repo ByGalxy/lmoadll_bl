@@ -10,11 +10,14 @@ lmoadll_bl platform
 
 from flask import Flask
 from var.Inits import Init_module
+from dotenv import load_dotenv
+import os
 
 
 
+load_dotenv()
+env_debug = os.getenv('debug')
 app = Flask(__name__)
-
 Init_module(app)
 
 
@@ -24,4 +27,4 @@ def root():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=2324, debug=False, threaded=True)
+    app.run(host='0.0.0.0', port=2324, debug=env_debug, threaded=True) # text

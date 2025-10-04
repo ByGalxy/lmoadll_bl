@@ -4,7 +4,7 @@ import os
 
 
 """
-初始化应用模块
+初始化模块
 
 Args:
     app: Flask应用实例
