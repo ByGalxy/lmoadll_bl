@@ -27,4 +27,4 @@ def root():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=2324, debug=env_debug, threaded=True) # text
+    app.run(host='0.0.0.0', port=2324, debug=env_debug, threaded=True)

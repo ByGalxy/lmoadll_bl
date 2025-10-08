@@ -95,13 +95,19 @@ def login_api():
             "message": "登录成功"
         })
         
-        # 设置cookie，不设置过期时间使它成为会话cookie
-        # 当token过期时，用户需要重新登录，新生成的token会自动覆盖旧token
+        """
+        设置cookie, 不设置过期时间使它成为会话cookie
+        当token过期时, 用户需要重新登录, 新生成的token会自动覆盖旧token
+        secure:
+            https协议传输, 打开后如果不是HTTPS连接, 浏览器会拒绝保存带有secure=True的Cookie.
+            如果开发环境, 发现浏览器保存Cookie, 请检查是否开启了secure选项.
+            如果是生产环境, 网站建议使用HTTPS协议并打开secure选项.
+        """
         response.set_cookie(
             'access_token', 
             access_token,
             httponly=True,
-            secure=True,# 开发环境可以设为False，生产环境应设为True
+            secure=True,
             samesite='Lax'
         )
 

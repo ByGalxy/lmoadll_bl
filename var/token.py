@@ -62,7 +62,6 @@ def create_jwt_token(identity):
 获取当前登录用户的身份信息
 """
 def get_current_user_identity():
-    
     try:
         # 尝试从cookie中获取令牌
         access_token = request.cookies.get('access_token')

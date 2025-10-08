@@ -9,13 +9,14 @@
 from flask import Blueprint, send_file, Response, redirect, url_for, request
 from functools import wraps
 from var.token import get_current_user_identity
-from var.sql.sqlite.sqlite import get_user_role_by_identity, get_user_count, get_user_name_by_identity
+from var.sql.sqlite.sqlite import get_user_role_by_identity, get_user_count, get_user_name_by_identity, get_site_option_by_name
 
 
 
 adminRouter = Blueprint('admin', __name__, url_prefix='/admin')
 
 
+# 没权限就想来? 没门()
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -40,7 +41,6 @@ def admin_required(f):
         except Exception as e:
             print(f"获取用户信息时出错: {e}")
             return redirect('/')
-    
     return decorated_function
 
 
@@ -105,4 +105,21 @@ def admin_get_admin_identity() -> Response:
         return Response('Unknown', mimetype='text/plain')
     except Exception as e:
         print(f"获取用户身份时出错: {e}")
+        return Response('Unknown', mimetype='text/plain')
+
+
+"""
+P26
+get name options
+查询全局设置
+"""
+@adminRouter.route('/get_name_options', methods=['POST'])
+@admin_required
+def admin_get_name_options() -> Response:
+    try:
+        user = request.json.get('user').strip()
+        name_options = get_site_option_by_name(user) # [True, {"name": name, "user": user, "value": value}]
+        return Response(name_options[1]['value'], mimetype='text/plain')
+    except Exception as e:
+        print(f'获取全局设置失败喵: {e}') # fuck
         return Response('Unknown', mimetype='text/plain')

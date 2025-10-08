@@ -15,7 +15,7 @@ import re
 
 
 
-__all__ = ['sc_verification_db_conn', 'check_superadmin_exists', 'get_user_by_username_or_email', 'get_user_role_by_identity', 'get_user_count', 'get_user_name_by_identity', 'get_or_set_site_option']
+__all__ = ['sc_verification_db_conn', 'check_superadmin_exists', 'get_user_by_username_or_email', 'get_user_role_by_identity', 'get_user_count', 'get_user_name_by_identity', 'get_or_set_site_option', 'get_db_connection', 'get_site_option_by_name']
 
 
 # 创建数据库和表
@@ -74,6 +74,23 @@ def sc_verification_db_conn(db_prefix, sql_sqlite_path):
             conn.close()
 
 
+# 获取数据库连接和配置
+def get_db_connection():
+    """获取数据库连接、游标和表名，处理配置检查逻辑"""
+    db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
+    sql_sqlite_path = Doesitexist_configtoml('db', 'sql_sqlite_path')
+    if not db_prefix or not sql_sqlite_path:
+        print("数据库配置缺失")
+        return [False, "数据库配置缺失", None, None, None]
+    try:
+        conn = sqlite3.connect(sql_sqlite_path)
+        cursor = conn.cursor()
+        table_name = f'{db_prefix}users'
+        return [True, "数据库连接成功", conn, cursor, table_name]
+    except sqlite3.Error as e:
+        return [False, str(e), None, None, None]
+
+
 '''
 P24
 创建或修改网站设置
@@ -112,6 +129,47 @@ def get_or_set_site_option(db_prefix, sql_sqlite_path, option_name, option_value
                 return [True, result[0]]
             return [False, "选项不存在"]
     except sqlite3.Error as e:
+        return [False, str(e)]
+    finally:
+        if conn:
+            conn.close()
+
+
+"""
+P26
+查询网站设置
+"""
+def get_site_option_by_name(option_name):
+    success, message, conn, cursor, _ = get_db_connection()
+    if not success:
+        return [False, message]
+    try:
+        db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
+        if not db_prefix:
+            return [False, "数据库前缀配置缺失"]
+            
+        table_name = f'{db_prefix}options'
+        
+        # 查询name
+        cursor.execute(f'SELECT name, user, value FROM {table_name} WHERE name = ?', (option_name,))
+        result = cursor.fetchone()
+        
+        if result:
+            name, user, value = result
+            """
+            为了安全,先判断user是否为0
+                - True, 返回name、user、value
+                - False, 跳过, 等后面添加功能
+            """
+            if user == 0:
+                return [True, {'name': name, 'user': user, 'value': value}]
+            else:
+                # 如果user不是0，则跳过
+                return [True, None]
+        else:
+            return [False, '未找到指定的设置']
+    except sqlite3.Error as e:
+        print(f'查询网站设置失败: {e}')
         return [False, str(e)]
     finally:
         if conn:
@@ -186,47 +244,53 @@ def check_superadmin_exists(db_prefix, sql_sqlite_path, admin_username, admin_em
 
 # 通过用户的uid查找用户的身份权限
 def get_user_role_by_identity(user_identity):
-    db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
-    sql_sqlite_path = Doesitexist_configtoml('db', 'sql_sqlite_path')
-    if not db_prefix or not sql_sqlite_path:
-        print("数据库配置缺失")
-        return [False, "数据库配置缺失"]
-    conn = sqlite3.connect(sql_sqlite_path)
-    cursor = conn.cursor()
-    table_name = f'{db_prefix}users'
-    cursor.execute(f"SELECT `group` FROM {table_name} WHERE uid = ?", (user_identity,))
-    user_group = cursor.fetchone()
-    conn.close()
-    return user_group # 期望返回,如: ('superadministrator',)
+    success, message, conn, cursor, table_name = get_db_connection()
+    if not success:
+        return [False, message]
+    
+    try:
+        cursor.execute(f"SELECT `group` FROM {table_name} WHERE uid = ?", (user_identity,))
+        user_group = cursor.fetchone()
+        return user_group  # 期望返回,如: ('superadministrator',)
+    except sqlite3.Error as e:
+        print(f"查询用户角色失败: {e}")
+        return [False, str(e)]
+    finally:
+        if conn:
+            conn.close()
 
 
 # 通过用户的uid查找用户名
 def get_user_name_by_identity(user_identity):
-    db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
-    sql_sqlite_path = Doesitexist_configtoml('db', 'sql_sqlite_path')
-    if not db_prefix or not sql_sqlite_path:
-        print("数据库配置缺失")
-        return [False, "数据库配置缺失"]
-    conn = sqlite3.connect(sql_sqlite_path)
-    cursor = conn.cursor()
-    table_name = f'{db_prefix}users'
-    cursor.execute(f"SELECT name FROM {table_name} WHERE uid = ?", (user_identity,))
-    user_name = cursor.fetchone()
-    conn.close()
-    return user_name # 期望返回,如: ('admin',)
+    success, message, conn, cursor, table_name = get_db_connection()
+    if not success:
+        return [False, message]
+    
+    try:
+        cursor.execute(f"SELECT name FROM {table_name} WHERE uid = ?", (user_identity,))
+        user_name = cursor.fetchone()
+        return user_name  # 期望返回,如: ('admin',)
+    except sqlite3.Error as e:
+        print(f"查询用户名失败: {e}")
+        return [False, str(e)]
+    finally:
+        if conn:
+            conn.close()
 
 
 # 获取用户数量
 def get_user_count():
-    db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
-    sql_sqlite_path = Doesitexist_configtoml('db', 'sql_sqlite_path')
-    if not db_prefix or not sql_sqlite_path:
-        print("数据库配置缺失")
-        return [False, "数据库配置缺失"]
-    conn = sqlite3.connect(sql_sqlite_path)
-    cursor = conn.cursor()
-    table_name = f'{db_prefix}users'
-    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-    user_count = cursor.fetchone()[0]
-    conn.close()
-    return user_count
+    success, message, conn, cursor, table_name = get_db_connection()
+    if not success:
+        return [False, message]
+    
+    try:
+        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+        user_count = cursor.fetchone()[0]
+        return user_count
+    except sqlite3.Error as e:
+        print(f"查询用户数量失败: {e}")
+        return [False, str(e)]
+    finally:
+        if conn:
+            conn.close()

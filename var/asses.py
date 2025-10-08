@@ -10,6 +10,7 @@ assersRouter = Blueprint('asses', __name__, url_prefix='/asses')
 def admin_assess_css(filename):
     return send_from_directory('admin/asses/css', filename)
 
+
 @assersRouter.route('/js/<path:filename>')
 def admin_assess_js(filename):
     return send_from_directory('admin/asses/js', filename)
