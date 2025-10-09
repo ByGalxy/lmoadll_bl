@@ -10,8 +10,11 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
 
-# 导出主要函数
-__all__ = ['hash_password', 'verify_password']
+
+__all__ = [
+    'hash_password', 
+    'verify_password'
+]
 
 
 # 创建PasswordHasher实例

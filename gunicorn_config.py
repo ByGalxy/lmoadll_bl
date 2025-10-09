@@ -18,7 +18,7 @@ proc_name = "lmoadll_bl"
 # 每个工作进程的线程数
 threads = 2
 # 最大并发数
-worker_connections = 1000
+worker_connections = 512
 # 请求超时时间(秒)
 timeout = 30
 # 保持活动连接的时间(秒)

@@ -24,13 +24,13 @@ def Init_module(app):
 
     # 注册install路由
     if os.path.exists('install.py'):
-        from install import installRouter
+        from install.install import installRouter
         app.register_blueprint(installRouter)
 
 
     # 注册admin相关路由
     if os.path.exists('./admin'):
-        from admin.index import adminRouter
+        from admin.admin import adminRouter
         from admin.login import loginRouter
         from var.auth import authRouter
         app.register_blueprint(adminRouter)

@@ -5,6 +5,11 @@ import tomli_w
 
 
 
+__all__ = [
+    'Doesitexist_configtoml', 
+    'red_configtoml'
+]
+
 config_path = 'config.toml'
 
 

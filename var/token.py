@@ -15,7 +15,12 @@ import secrets
 
 
 
-__all__ = ['init_jwt_manager', 'create_jwt_token', 'get_current_user_identity', 'jwt_required']
+__all__ = [
+    'init_jwt_manager', 
+    'create_jwt_token', 
+    'get_current_user_identity', 
+    'jwt_required'
+]
 
 
 """

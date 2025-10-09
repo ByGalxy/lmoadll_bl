@@ -5,11 +5,14 @@ import argparse
 import subprocess
 
 
+
 def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(description="启动Gunicorn服务器")
     parser.add_argument("--daemon", action="store_true", help="以守护进程模式运行")
-    parser.add_argument("--port", type=int, default=2324, help="服务器端口号")
+    from gunicorn_config import bind
+    port_from_config = int(bind.split(':')[-1])
+    parser.add_argument("--port", type=int, default=port_from_config, help="服务器端口号")
     parser.add_argument("--workers", type=int, default=None, help="工作进程数量")
     parser.add_argument(
         "--env",
@@ -36,7 +39,7 @@ def main():
     if args.daemon:
         cmd.append("--daemon")
 
-    if args.port != 5000:
+    if args.port != port_from_config:
         cmd.extend(["--bind", f"127.0.0.1:{args.port}"])
 
     if args.workers is not None:
@@ -52,7 +55,8 @@ def main():
     print("正在启动Gunicorn服务器...")
     print("-" * 42)
     print(f"命令: {' '.join(cmd)}")
-    print(f"端口: {args.port}")
+    print(f"配置端口: {port_from_config}")
+    print(f"运行端口: {args.port}")
 
     # 检查是否安装了gunicorn
     try:
@@ -63,7 +67,7 @@ def main():
             check=True,
         )
     except subprocess.CalledProcessError:
-        print("\n❌ 错误: 未安装gunicorn")
+        print("\n❌ 错误: 未安装gunicorn或不支持您当前平台")
         print("请先运行: pip install -r requirements.txt")
         sys.exit(1)
 

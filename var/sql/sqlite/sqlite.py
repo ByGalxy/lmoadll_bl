@@ -14,16 +14,25 @@ import os
 import re
 
 
-
-__all__ = ['sc_verification_db_conn', 'check_superadmin_exists', 'get_user_by_username_or_email', 'get_user_role_by_identity', 'get_user_count', 'get_user_name_by_identity', 'get_or_set_site_option', 'get_db_connection', 'get_site_option_by_name']
+__all__ = [
+    "sc_verification_db_conn",
+    "check_superadmin_exists",
+    "get_user_by_username_or_email",
+    "get_user_role_by_identity",
+    "get_user_count",
+    "get_user_name_by_identity",
+    "get_or_set_site_option",
+    "get_db_connection",
+    "get_site_option_by_name",
+]
 
 
 # 创建数据库和表
 def sc_verification_db_conn(db_prefix, sql_sqlite_path):
     conn = None
     try:
-        red_configtoml('db', 'sql_rd', 'sqlite3')
-        red_configtoml('db', 'sql_prefix', db_prefix)
+        red_configtoml("db", "sql_rd", "sqlite3")
+        red_configtoml("db", "sql_prefix", db_prefix)
 
         directory_path = os.path.dirname(sql_sqlite_path)
         if directory_path and not os.path.exists(directory_path):
@@ -31,13 +40,13 @@ def sc_verification_db_conn(db_prefix, sql_sqlite_path):
 
         conn = sqlite3.connect(sql_sqlite_path)
         cursor = conn.cursor()
-        table_name = f'{db_prefix}users'
+        table_name = f"{db_prefix}users"
         # 验证表名: 仅允许字母数字和下划线
-        if not re.match(r'^\w+$', table_name):
+        if not re.match(r"^\w+$", table_name):
             raise ValueError("无效表名, 只允许使用字母数字字符和下划线.")
-        
+
         # 创建users表
-        create_users_table_sql = f'''CREATE TABLE IF NOT EXISTS {table_name} (
+        create_users_table_sql = f"""CREATE TABLE IF NOT EXISTS {table_name} (
             uid INTEGER NOT NULL PRIMARY KEY,
             name VARCHAR(32) DEFAULT NULL,
             password VARCHAR(64) DEFAULT NULL,
@@ -48,21 +57,21 @@ def sc_verification_db_conn(db_prefix, sql_sqlite_path):
             isLoggedIn INTEGER DEFAULT 0,
             "group" VARCHAR(16) DEFAULT 'visitor'
         )
-        '''
+        """
         cursor.execute(create_users_table_sql)
-        
+
         # 创建options表
-        options_table_name = f'{db_prefix}options'
-        create_options_table_sql = f'''CREATE TABLE IF NOT EXISTS {options_table_name} (
+        options_table_name = f"{db_prefix}options"
+        create_options_table_sql = f"""CREATE TABLE IF NOT EXISTS {options_table_name} (
             name VARCHAR(32) NOT NULL,
             user INT(10) DEFAULT '0' NOT NULL,
             value TEXT
         )
-        '''
+        """
         cursor.execute(create_options_table_sql)
 
         # 创建唯一索引
-        create_index_sql = f'CREATE UNIQUE INDEX IF NOT EXISTS {db_prefix}options__name_user ON {options_table_name} (name, user)'
+        create_index_sql = f"CREATE UNIQUE INDEX IF NOT EXISTS {db_prefix}options__name_user ON {options_table_name} (name, user)"
         cursor.execute(create_index_sql)
         conn.commit()
         red_configtoml("db", "sql_sqlite_path", sql_sqlite_path)
@@ -77,53 +86,65 @@ def sc_verification_db_conn(db_prefix, sql_sqlite_path):
 # 获取数据库连接和配置
 def get_db_connection():
     """获取数据库连接、游标和表名，处理配置检查逻辑"""
-    db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
-    sql_sqlite_path = Doesitexist_configtoml('db', 'sql_sqlite_path')
+    db_prefix = Doesitexist_configtoml("db", "sql_prefix")
+    sql_sqlite_path = Doesitexist_configtoml("db", "sql_sqlite_path")
     if not db_prefix or not sql_sqlite_path:
         print("数据库配置缺失")
         return [False, "数据库配置缺失", None, None, None]
     try:
         conn = sqlite3.connect(sql_sqlite_path)
         cursor = conn.cursor()
-        table_name = f'{db_prefix}users'
+        table_name = f"{db_prefix}users"
         return [True, "数据库连接成功", conn, cursor, table_name]
     except sqlite3.Error as e:
         return [False, str(e), None, None, None]
 
 
-'''
+"""
 P24
 创建或修改网站设置
-'''
-def get_or_set_site_option(db_prefix, sql_sqlite_path, option_name, option_value=None, user_id=0):
+"""
+
+
+def get_or_set_site_option(
+    db_prefix, sql_sqlite_path, option_name, option_value=None, user_id=0
+):
     conn = None
     try:
         conn = sqlite3.connect(sql_sqlite_path)
         cursor = conn.cursor()
-        table_name = f'{db_prefix}options'
-        
+        table_name = f"{db_prefix}options"
+
         # 如果提供了option_value，则设置或更新选项
         if option_value is not None:
             # 检查选项是否已存在
-            cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE name = ? AND user = ?", 
-                          (option_name, user_id))
+            cursor.execute(
+                f"SELECT COUNT(*) FROM {table_name} WHERE name = ? AND user = ?",
+                (option_name, user_id),
+            )
             count = cursor.fetchone()[0]
-            
+
             if count > 0:
                 # 更新现有选项
-                cursor.execute(f"UPDATE {table_name} SET value = ? WHERE name = ? AND user = ?", 
-                              (option_value, option_name, user_id))
+                cursor.execute(
+                    f"UPDATE {table_name} SET value = ? WHERE name = ? AND user = ?",
+                    (option_value, option_name, user_id),
+                )
             else:
                 # 插入新选项
-                cursor.execute(f"INSERT INTO {table_name} (name, user, value) VALUES (?, ?, ?)", 
-                              (option_name, user_id, option_value))
-            
+                cursor.execute(
+                    f"INSERT INTO {table_name} (name, user, value) VALUES (?, ?, ?)",
+                    (option_name, user_id, option_value),
+                )
+
             conn.commit()
             return [True, "网站选项设置成功"]
         else:
             # 如果没有提供option_value，则获取选项
-            cursor.execute(f"SELECT value FROM {table_name} WHERE name = ? AND user = ?", 
-                          (option_name, user_id))
+            cursor.execute(
+                f"SELECT value FROM {table_name} WHERE name = ? AND user = ?",
+                (option_name, user_id),
+            )
             result = cursor.fetchone()
             if result:
                 return [True, result[0]]
@@ -139,21 +160,25 @@ def get_or_set_site_option(db_prefix, sql_sqlite_path, option_name, option_value
 P26
 查询网站设置
 """
+
+
 def get_site_option_by_name(option_name):
     success, message, conn, cursor, _ = get_db_connection()
     if not success:
         return [False, message]
     try:
-        db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
+        db_prefix = Doesitexist_configtoml("db", "sql_prefix")
         if not db_prefix:
             return [False, "数据库前缀配置缺失"]
-            
-        table_name = f'{db_prefix}options'
-        
+
+        table_name = f"{db_prefix}options"
+
         # 查询name
-        cursor.execute(f'SELECT name, user, value FROM {table_name} WHERE name = ?', (option_name,))
+        cursor.execute(
+            f"SELECT name, user, value FROM {table_name} WHERE name = ?", (option_name,)
+        )
         result = cursor.fetchone()
-        
+
         if result:
             name, user, value = result
             """
@@ -162,14 +187,14 @@ def get_site_option_by_name(option_name):
                 - False, 跳过, 等后面添加功能
             """
             if user == 0:
-                return [True, {'name': name, 'user': user, 'value': value}]
+                return [True, {"name": name, "user": user, "value": value}]
             else:
                 # 如果user不是0，则跳过
                 return [True, None]
         else:
-            return [False, '未找到指定的设置']
+            return [False, "未找到指定的设置"]
     except sqlite3.Error as e:
-        print(f'查询网站设置失败: {e}')
+        print(f"查询网站设置失败: {e}")
         return [False, str(e)]
     finally:
         if conn:
@@ -182,25 +207,27 @@ def get_user_by_username_or_email(db_prefix, sql_sqlite_path, username_or_email)
     try:
         conn = sqlite3.connect(sql_sqlite_path)
         cursor = conn.cursor()
-        
-        table_name = f'{db_prefix}users'
-        
+
+        table_name = f"{db_prefix}users"
+
         # 查询用户信息
-        cursor.execute(f"SELECT uid, name, password, mail, `group` FROM {table_name} WHERE name = ? OR mail = ?", 
-                      (username_or_email, username_or_email))
+        cursor.execute(
+            f"SELECT uid, name, password, mail, `group` FROM {table_name} WHERE name = ? OR mail = ?",
+            (username_or_email, username_or_email),
+        )
         user = cursor.fetchone()
-        
+
         if user:
             # 返回用户信息字典
             return {
-                'uid': user[0],
-                'name': user[1],
-                'password': user[2],
-                'email': user[3],
-                'group': user[4]
+                "uid": user[0],
+                "name": user[1],
+                "password": user[2],
+                "email": user[3],
+                "group": user[4],
             }
         return None
-        
+
     except sqlite3.Error as e:
         print(f"查询用户信息失败: {e}")
         return None
@@ -210,31 +237,46 @@ def get_user_by_username_or_email(db_prefix, sql_sqlite_path, username_or_email)
 
 
 # 检查超级管理员是否存在，如果不存在则创建超级管理员账号，如果存在则返回false
-def check_superadmin_exists(db_prefix, sql_sqlite_path, admin_username, admin_email, admin_password):
+def check_superadmin_exists(
+    db_prefix, sql_sqlite_path, admin_username, admin_email, admin_password
+):
     conn = None
     try:
         conn = sqlite3.connect(sql_sqlite_path)
         cursor = conn.cursor()
-        
-        table_name = f'{db_prefix}users'
-        
+
+        table_name = f"{db_prefix}users"
+
         # 检查超级管理员是否已经存在
-        cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE `group` = ?", ('superadministrator',))
+        cursor.execute(
+            f"SELECT COUNT(*) FROM {table_name} WHERE `group` = ?",
+            ("superadministrator",),
+        )
         count = cursor.fetchone()[0]
-        
+
         if count > 0:
             return [False, "超级管理员账号已存在"]
-        
+
         # 创建超级管理员账号
         import time
+
         current_time = int(time.time())
-        
-        cursor.execute(f"INSERT INTO {table_name} (name, password, mail, createdAt, isActive, `group`) VALUES (?, ?, ?, ?, ?, ?)",
-                      (admin_username, admin_password, admin_email, current_time, 1, 'superadministrator'))
+
+        cursor.execute(
+            f"INSERT INTO {table_name} (name, password, mail, createdAt, isActive, `group`) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                admin_username,
+                admin_password,
+                admin_email,
+                current_time,
+                1,
+                "superadministrator",
+            ),
+        )
         conn.commit()
-        
+
         return [True, "超级管理员账号创建成功"]
-        
+
     except sqlite3.Error as e:
         return [False, str(e)]
     finally:
@@ -247,9 +289,11 @@ def get_user_role_by_identity(user_identity):
     success, message, conn, cursor, table_name = get_db_connection()
     if not success:
         return [False, message]
-    
+
     try:
-        cursor.execute(f"SELECT `group` FROM {table_name} WHERE uid = ?", (user_identity,))
+        cursor.execute(
+            f"SELECT `group` FROM {table_name} WHERE uid = ?", (user_identity,)
+        )
         user_group = cursor.fetchone()
         return user_group  # 期望返回,如: ('superadministrator',)
     except sqlite3.Error as e:
@@ -265,7 +309,7 @@ def get_user_name_by_identity(user_identity):
     success, message, conn, cursor, table_name = get_db_connection()
     if not success:
         return [False, message]
-    
+
     try:
         cursor.execute(f"SELECT name FROM {table_name} WHERE uid = ?", (user_identity,))
         user_name = cursor.fetchone()
@@ -283,7 +327,7 @@ def get_user_count():
     success, message, conn, cursor, table_name = get_db_connection()
     if not success:
         return [False, message]
-    
+
     try:
         cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
         user_count = cursor.fetchone()[0]

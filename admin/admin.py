@@ -1,10 +1,10 @@
-'''
+"""
 -*- coding: utf-8 -*-
 系统后台管理
 
 为了区分普通用户和管理员, 此管理面板为管理员专属;
 普通用户应该另开, 而不是使用管理员面板.
-'''
+"""
 
 from flask import Blueprint, send_file, Response, redirect, url_for, request
 from functools import wraps
@@ -47,7 +47,7 @@ def admin_required(f):
 @adminRouter.route('/', methods=['GET'])
 @admin_required
 def admin_index() -> Response:
-    return send_file('admin/base/index.html')
+    return send_file('admin/base/admin.html')
 
 
 @adminRouter.route('/options-general', methods=['GET'])
