@@ -10,7 +10,7 @@ from functools import wraps
 from var.argon2_password import verify_password
 from var.token import create_jwt_token, get_current_user_identity
 from var.toml_config import Doesitexist_configtoml
-from var.sql.sqlite.sqlite import get_user_by_username_or_email
+from var.sql.sqlite import get_user_by_username_or_email
 
 
 
@@ -21,21 +21,17 @@ authRouter = Blueprint('auth', __name__, url_prefix='/auth')
 P22
 登录验证装饰器
 检查用户是否已登录，未登录则重定向到登录页面
+获取用户身份和get路径中的查询参数，如果用户已登录执行原有函数否则重定向登录页面
 """
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # 尝试获取当前用户身份
         user_identity = get_current_user_identity()
         if user_identity is None:
-            # 获取当前请求的路径部分作为原始页面
             original_path = request.path
-            # 如果存在查询参数，也一并传递
             if request.query_string:
                 original_path = f"{original_path}?{request.query_string.decode('utf-8')}"
-            # 重定向到登录页面，并传递原始页面路径作为查询参数
             return redirect(url_for('login.login_page', redirect=original_path))
-        # 用户已登录，继续执行原函数
         return f(*args, **kwargs)
     return decorated_function
 
@@ -46,7 +42,7 @@ def login_required(f):
 请求格式：
 POST /auth/login
 {
-    "username_or_email": "用户输入的用户名或邮箱",
+    "username_or_email": "用户输入的邮箱",
     "password": "用户输入的密码"
 }
 
@@ -60,39 +56,39 @@ def login_api():
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"code": 400, "message": "请求数据为空"}), 400
+            return jsonify({"code": 400, "message": "请求数据为空喵喵"}), 400
         
         username_or_email = data.get('username_or_email')
         password = data.get('password')
         
         if not username_or_email or not password:
-            return jsonify({"code": 400, "message": "用户名/邮箱和密码不能为空"}), 400
+            return jsonify({"code": 400, "message": "邮箱和密码不能为空喵喵"}), 400
 
         try:
             db_prefix = Doesitexist_configtoml('db', 'sql_prefix')
             sql_sqlite_path = Doesitexist_configtoml('db', 'sql_sqlite_path')
             
             if not db_prefix or not sql_sqlite_path:
-                return jsonify({"code": 500, "message": "数据库配置缺失"}), 500
+                return jsonify({"code": 500, "message": "数据库配置缺失喵喵"}), 500
         except Exception as e:
-            return jsonify({"code": 500, "message": f"读取配置失败: {str(e)}"}), 500
+            return jsonify({"code": 500, "message": f"读取配置失败喵喵: {str(e)}"}), 500
         
         user = get_user_by_username_or_email(db_prefix, sql_sqlite_path, username_or_email)
         if not user:
-            return jsonify({"code": 401, "message": "用户名/邮箱或密码错误"}), 401
+            return jsonify({"code": 401, "message": "邮箱或密码错误喵喵"}), 401
         
         if not verify_password(user['password'], password):
-            return jsonify({"code": 401, "message": "用户名/邮箱或密码错误"}), 401
+            return jsonify({"code": 401, "message": "邮箱或密码错误喵喵"}), 401
         
         # 生成JWT令牌，确保用户ID是字符串类型
         access_token = create_jwt_token(identity=str(user['uid']))
         if not access_token:
-            return jsonify({"code": 500, "message": "生成令牌失败"}), 500
+            return jsonify({"code": 500, "message": "生成令牌失败喵喵"}), 500
         
         # 设置JWT令牌到cookie中，设置httponly防止XSS攻击
         response = jsonify({
             "code": 200,
-            "message": "登录成功"
+            "message": "登录成功喵"
         })
         
         """

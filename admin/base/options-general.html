@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>设置 - Lmoadll</title>
-    <link rel="stylesheet" href="/asses/css/admin.css">
+    <link rel="stylesheet" href="/asses/admin/admin.css">
     <svg width="0" height="0" class="hidden">
         <symbol id="icon-logo" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" fill="#1DA1F2" />
@@ -143,20 +143,6 @@
             </div>
 
             <div class="form-section">
-                <h2 class="form-section-title">管理员设置</h2>
-
-                <div class="form-group">
-                    <label class="form-label" for="admin-email">管理员邮箱</label>
-                    <input type="email" id="admin-email" class="form-input" placeholder="请输入管理员邮箱">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="notification-email">通知邮箱</label>
-                    <input type="email" id="notification-email" class="form-input" placeholder="请输入通知邮箱">
-                </div>
-            </div>
-
-            <div class="form-section">
                 <h2 class="form-section-title">其他设置</h2>
 
                 <div class="form-checkbox">
@@ -164,12 +150,7 @@
                     <label for="enable-registration">允许用户注册</label>
                 </div>
 
-                <div class="form-checkbox">
-                    <input type="checkbox" id="enable-comments">
-                    <label for="enable-comments">启用评论功能</label>
-                </div>
-
-                <div class="form-group">
+                <!-- <div class="form-group">
                     <label class="form-label" for="posts-per-page">每页显示文章数</label>
                     <select id="posts-per-page" class="form-select">
                         <option value="5">5</option>
@@ -178,13 +159,14 @@
                         <option value="20">20</option>
                         <option value="25">25</option>
                     </select>
-                </div>
+                </div> -->
             </div>
 
             <button type="submit" class="submit-btn">保存设置</button>
         </div>
     </div>
-    <script src="/asses/js/admin.js"></script>
+    <script src="/asses/admin/admin.js"></script>
+    <script src="/asses/admin/options-general.js"></script>
 </body>
 
 </html>

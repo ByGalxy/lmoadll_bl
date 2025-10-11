@@ -2,6 +2,10 @@
 import pymysql
 
 
+__all__ = [
+    "sc_verification_db_conn"
+]
+
 
 # 测试数据库连接
 def sc_verification_db_conn(db_host, db_port, db_name, db_user, db_password):

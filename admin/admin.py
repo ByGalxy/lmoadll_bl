@@ -9,7 +9,8 @@
 from flask import Blueprint, send_file, Response, redirect, url_for, request
 from functools import wraps
 from var.token import get_current_user_identity
-from var.sql.sqlite.sqlite import get_user_role_by_identity, get_user_count, get_user_name_by_identity, get_site_option_by_name
+from var.sql.sqlite import get_user_role_by_identity, get_user_count, get_user_name_by_identity, get_site_option_by_name, get_or_set_site_option, create_site_option
+from var.toml_config import Doesitexist_configtoml
 
 
 
@@ -44,6 +45,33 @@ def admin_required(f):
     return decorated_function
 
 
+# test 
+def admin_sql_name_cx():
+    d = [
+        'site_name',
+        'site_url',
+        'site_description',
+        'site_keywords'
+    ]
+    # 获取数据库前缀和路径
+    db_prefix = Doesitexist_configtoml("db", "sql_prefix")
+    sql_sqlite_path = Doesitexist_configtoml("db", "sql_sqlite_path")
+
+    if not db_prefix or not sql_sqlite_path:
+        print("数据库配置缺失")
+        return [False, "数据库配置缺失"]
+    
+    for option_name in d:
+        # 检查选项是否存在
+        option = get_site_option_by_name(option_name)
+        if not option[0]:
+            # 如果选项不存在，则创建它
+            create_site_option(option_name, None) # 初始值为空字符串
+            print(f"创建选项: {option_name}")
+    return [True, "选项检查完成"]
+    
+
+
 @adminRouter.route('/', methods=['GET'])
 @admin_required
 def admin_index() -> Response:
@@ -53,6 +81,7 @@ def admin_index() -> Response:
 @adminRouter.route('/options-general', methods=['GET'])
 @admin_required
 def admin_options_general() -> Response:
+    admin_sql_name_cx()
     return send_file('admin/base/options-general.html')
 
 
@@ -117,9 +146,45 @@ get name options
 @admin_required
 def admin_get_name_options() -> Response:
     try:
-        user = request.json.get('user').strip()
-        name_options = get_site_option_by_name(user) # [True, {"name": name, "user": user, "value": value}]
-        return Response(name_options[1]['value'], mimetype='text/plain')
+        option_name = request.json.get('user').strip()
+        # 该text中直接转值user给sql，存在很大的安全问题，需套一个过滤器
+        name_options = get_site_option_by_name(option_name) # [True, {"name": name, "user": user, "value": value}]
+        if name_options[0] and name_options[1] is not None:
+            return Response(name_options[1]['value'], mimetype='text/plain')
+        else:
+            return Response('', mimetype='text/plain')
     except Exception as e:
-        print(f'获取全局设置失败喵: {e}') # fuck
+        print(f'获取全局设置失败喵: {e}')
         return Response('Unknown', mimetype='text/plain')
+
+
+# set name options
+@adminRouter.route('/set_name_options', methods=['POST'])
+@admin_required
+def admin_set_name_options() -> Response:
+    try:
+        site_name = request.json.get('site_name').strip()
+        site_description = request.json.get('site_description').strip()
+        site_keywords = request.json.get('site_keywords').strip()
+        print("site_keywords:", site_keywords)
+        # 获取数据库前缀和路径
+        db_prefix = Doesitexist_configtoml("db", "sql_prefix")
+        sql_sqlite_path = Doesitexist_configtoml("db", "sql_sqlite_path")
+
+        if not db_prefix or not sql_sqlite_path:
+            return Response("数据库配置缺失", mimetype='text/plain')
+
+        # 保存网站名称
+        result_name = get_or_set_site_option(db_prefix, sql_sqlite_path, 'site_name', site_name)
+        # 保存网站描述
+        result_description = get_or_set_site_option(db_prefix, sql_sqlite_path, 'site_description', site_description)
+        # 保存网站关键词
+        result_keywords = get_or_set_site_option(db_prefix, sql_sqlite_path, 'site_keywords', site_keywords)
+        if result_name[0] and result_description[0] and result_keywords[0]:
+            return Response("网站设置保存成功", mimetype='text/plain')
+        else:
+            print(f'网站设置保存失败喵: {result_name[1]}, {result_description[1]}, {result_keywords[1]}')
+            return Response(f"网站设置保存失败: {result_name[1]}, {result_description[1]}, {result_keywords[1]}", mimetype='text/plain')
+    except Exception as e:
+        print(f'保存全局设置失败喵: {e}')
+        return Response(f'保存全局设置失败: {e}', mimetype='text/plain')

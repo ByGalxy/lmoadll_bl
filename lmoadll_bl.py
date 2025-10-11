@@ -5,14 +5,12 @@ lmoadll_bl platform
 
 @copyright  Copyright (c) 2025 lmoadll_bl team
 @license  GNU General Public License 3.0
-
 """
 
 from flask import Flask
 from var.Inits import Init_module
 from dotenv import load_dotenv
 import os
-
 
 
 load_dotenv()

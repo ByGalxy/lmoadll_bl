@@ -24,6 +24,7 @@ __all__ = [
     "get_or_set_site_option",
     "get_db_connection",
     "get_site_option_by_name",
+    "create_site_option"
 ]
 
 
@@ -46,7 +47,8 @@ def sc_verification_db_conn(db_prefix, sql_sqlite_path):
             raise ValueError("无效表名, 只允许使用字母数字字符和下划线.")
 
         # 创建users表
-        create_users_table_sql = f"""CREATE TABLE IF NOT EXISTS {table_name} (
+        create_users_table_sql = f"""
+            CREATE TABLE IF NOT EXISTS {table_name} (
             uid INTEGER NOT NULL PRIMARY KEY,
             name VARCHAR(32) DEFAULT NULL,
             password VARCHAR(64) DEFAULT NULL,
@@ -62,7 +64,8 @@ def sc_verification_db_conn(db_prefix, sql_sqlite_path):
 
         # 创建options表
         options_table_name = f"{db_prefix}options"
-        create_options_table_sql = f"""CREATE TABLE IF NOT EXISTS {options_table_name} (
+        create_options_table_sql = f"""
+            CREATE TABLE IF NOT EXISTS {options_table_name} (
             name VARCHAR(32) NOT NULL,
             user INT(10) DEFAULT '0' NOT NULL,
             value TEXT
@@ -84,7 +87,7 @@ def sc_verification_db_conn(db_prefix, sql_sqlite_path):
 
 
 # 获取数据库连接和配置
-def get_db_connection():
+def get_db_connection(tablename):
     """获取数据库连接、游标和表名，处理配置检查逻辑"""
     db_prefix = Doesitexist_configtoml("db", "sql_prefix")
     sql_sqlite_path = Doesitexist_configtoml("db", "sql_sqlite_path")
@@ -94,7 +97,7 @@ def get_db_connection():
     try:
         conn = sqlite3.connect(sql_sqlite_path)
         cursor = conn.cursor()
-        table_name = f"{db_prefix}users"
+        table_name = f"{db_prefix}{tablename}"
         return [True, "数据库连接成功", conn, cursor, table_name]
     except sqlite3.Error as e:
         return [False, str(e), None, None, None]
@@ -102,10 +105,8 @@ def get_db_connection():
 
 """
 P24
-创建或修改网站设置
+仅修改网站设置
 """
-
-
 def get_or_set_site_option(
     db_prefix, sql_sqlite_path, option_name, option_value=None, user_id=0
 ):
@@ -123,7 +124,7 @@ def get_or_set_site_option(
                 (option_name, user_id),
             )
             count = cursor.fetchone()[0]
-
+            print(count)
             if count > 0:
                 # 更新现有选项
                 cursor.execute(
@@ -160,10 +161,8 @@ def get_or_set_site_option(
 P26
 查询网站设置
 """
-
-
 def get_site_option_by_name(option_name):
-    success, message, conn, cursor, _ = get_db_connection()
+    success, message, conn, cursor, _ = get_db_connection('users')
     if not success:
         return [False, message]
     try:
@@ -201,6 +200,27 @@ def get_site_option_by_name(option_name):
             conn.close()
 
 
+# 创建网站设置
+def create_site_option(option_name, option_value, user_id=0):
+    success, message, conn, cursor, table_name = get_db_connection('options')
+    if not success:
+        return [False, message]
+    try:
+        # 插入新选项
+        cursor.execute(
+            f"INSERT INTO {table_name} (name, user, value) VALUES (?, ?, ?)",
+            (option_name, user_id, option_value),
+        )
+        conn.commit()
+        return [True, "网站选项创建成功"]
+    except sqlite3.Error as e:
+        print(f"创建网站设置失败: {e}")
+        return [False, str(e)]
+    finally:
+        if conn:
+            conn.close()
+
+
 # 根据用户名或邮箱获取用户信息
 def get_user_by_username_or_email(db_prefix, sql_sqlite_path, username_or_email):
     conn = None
@@ -212,8 +232,8 @@ def get_user_by_username_or_email(db_prefix, sql_sqlite_path, username_or_email)
 
         # 查询用户信息
         cursor.execute(
-            f"SELECT uid, name, password, mail, `group` FROM {table_name} WHERE name = ? OR mail = ?",
-            (username_or_email, username_or_email),
+            f"SELECT uid, name, password, mail, `group` FROM {table_name} WHERE mail = ?",
+            (username_or_email,),  # 注意这里的逗号，确保是元组格式!!!
         )
         user = cursor.fetchone()
 
@@ -286,7 +306,7 @@ def check_superadmin_exists(
 
 # 通过用户的uid查找用户的身份权限
 def get_user_role_by_identity(user_identity):
-    success, message, conn, cursor, table_name = get_db_connection()
+    success, message, conn, cursor, table_name = get_db_connection('users')
     if not success:
         return [False, message]
 
@@ -306,7 +326,7 @@ def get_user_role_by_identity(user_identity):
 
 # 通过用户的uid查找用户名
 def get_user_name_by_identity(user_identity):
-    success, message, conn, cursor, table_name = get_db_connection()
+    success, message, conn, cursor, table_name = get_db_connection('users')
     if not success:
         return [False, message]
 
@@ -324,7 +344,7 @@ def get_user_name_by_identity(user_identity):
 
 # 获取用户数量
 def get_user_count():
-    success, message, conn, cursor, table_name = get_db_connection()
+    success, message, conn, cursor, table_name = get_db_connection('users')
     if not success:
         return [False, message]
 

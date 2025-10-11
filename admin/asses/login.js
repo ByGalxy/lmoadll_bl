@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorMessage = document.getElementById('errorMessage');
     const errorText = document.getElementById('errorText');
 
-    // 切换密码可见性
+    // 密码可见性
     let passwordVisible = false;
     togglePasswordButton.addEventListener('click', function () {
         passwordVisible = !passwordVisible;
