@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 """
--*- coding: utf-8 -*-
 密码哈希和验证模块
 
 该模块提供密码哈希和验证功能, 基于Argon2密码哈希算法,
@@ -12,8 +12,8 @@ from argon2.exceptions import VerifyMismatchError
 
 
 __all__ = [
-    'hash_password', 
-    'verify_password'
+    'HashPassword', 
+    'VerifyPassword'
 ]
 
 
@@ -27,8 +27,8 @@ ph = PasswordHasher(
 )
 
 
-# 对密码进行哈希处理
-def hash_password(password):
+def HashPassword(password):
+    """对密码进行哈希处理"""
     try:
         if not password or not isinstance(password, str):
             print("密码必须是非空字符串")
@@ -41,8 +41,8 @@ def hash_password(password):
         return None
 
 
-# 验证密码是否匹配哈希值
-def verify_password(pw_hash, password):
+def VerifyPassword(pw_hash, password):
+    """验证密码是否匹配哈希值"""
     try:
         if not pw_hash or not password:
             print("哈希值和密码必须是非空的")
@@ -52,5 +52,5 @@ def verify_password(pw_hash, password):
     except VerifyMismatchError:
         return False
     except Exception as e:
-        print(f"验证过程中出现错误: {e}")
+        print(f"验证过程中出现错误喵: {e}")
         return False

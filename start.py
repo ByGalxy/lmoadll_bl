@@ -3,14 +3,14 @@ import os
 import sys
 import argparse
 import subprocess
+from gunicorn_config import bind
 
 
 
 def main():
-    # 解析命令行参数
+    """解析命令行参数"""
     parser = argparse.ArgumentParser(description="启动Gunicorn服务器")
     parser.add_argument("--daemon", action="store_true", help="以守护进程模式运行")
-    from gunicorn_config import bind
     port_from_config = int(bind.split(':')[-1])
     parser.add_argument("--port", type=int, default=port_from_config, help="服务器端口号")
     parser.add_argument("--workers", type=int, default=None, help="工作进程数量")
@@ -67,7 +67,7 @@ def main():
             check=True,
         )
     except subprocess.CalledProcessError:
-        print("\n❌ 错误: 未安装gunicorn或不支持您当前平台")
+        print("\n❌ 错误喵: 未安装gunicorn或不支持您当前平台")
         print("请先运行: pip install -r requirements.txt")
         sys.exit(1)
 

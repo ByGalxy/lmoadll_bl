@@ -1,6 +1,5 @@
+# -*- coding: utf-8 -*-
 """
--*- coding: utf-8 -*-
-
 lmoadll_bl platform
 
 @copyright  Copyright (c) 2025 lmoadll_bl team

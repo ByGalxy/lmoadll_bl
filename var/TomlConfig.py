@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""用于处理 TOML 配置文件的读取和写入操作"""
 import os
 import tomllib
 import tomli_w
@@ -6,15 +7,15 @@ import tomli_w
 
 
 __all__ = [
-    'Doesitexist_configtoml', 
-    'red_configtoml'
+    'DoesitexistConfigToml', 
+    'WriteConfigToml'
 ]
 
 config_path = 'config.toml'
 
 
-# 检查配置文件是否存在并读取
-def Doesitexist_configtoml(a,b):
+def DoesitexistConfigToml(a,b):
+    """检查配置文件是否存在并读取"""
     if not os.path.exists(config_path):
         return False
     else:
@@ -27,8 +28,8 @@ def Doesitexist_configtoml(a,b):
             return config[a][b]
 
 
-# 检查键并写入配置文件
-def red_configtoml(a,b,c):
+def WriteConfigToml(a,b,c):
+    """检查键并写入配置文件"""
     # 检查配置文件是否存在, 不存在则创建新的配置文件和配置项
     if not os.path.exists(config_path):
         config = {a: {b: c}}

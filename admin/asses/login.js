@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
-    const usernameOrEmailInput = document.getElementById('username_or_email');
+    const usernameOrEmailInput = document.getElementById('username_email');
     const passwordInput = document.getElementById('password');
     const togglePasswordButton = document.getElementById('togglePassword');
     const loginButton = document.getElementById('loginButton');
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                username_or_email: usernameOrEmail,
+                username_email: usernameOrEmail,
                 password: password
             })
         })
