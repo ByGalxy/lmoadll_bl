@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#lmoadll_bl platform
+#
+#@copyright  Copyright (c) 2025 lmoadll_bl team
+#@license  GNU General Public License 3.0
 """
 认证模块
 
@@ -7,19 +11,18 @@
 
 from flask import Blueprint, request, jsonify, redirect, url_for
 from functools import wraps
-from var.Argon2Password import VerifyPassword
-from var.token import CreateJwtToken, GetCurrentUserIdentity
-from var.TomlConfig import DoesitexistConfigToml
-from var.sql.LmoadllOrm import GetUserByEmail
+from magic.utils.Argon2Password import VerifyPassword
+from magic.utils.token import CreateJwtToken, GetCurrentUserIdentity
+from magic.utils.TomlConfig import DoesitexistConfigToml
+from magic.utils.LmoadllOrm import GetUserByEmail
 
 
 
-authRouter = Blueprint('auth', __name__, url_prefix='/auth')
+auth_bp = Blueprint('auth', __name__)
 
 
 def login_required(f):
     """
-    P22
     登录验证装饰器
     ==============================
     检查用户是否已登录, 未登录则重定向到登录页面
@@ -38,14 +41,14 @@ def login_required(f):
     return decorated_function
 
 
-@authRouter.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['POST'])
 def login_api():
     """
     处理登录请求, 验证用户凭据并生成JWT令牌
 
     请求格式：
     ```
-    POST /auth/login
+    POST /api/auth/login
     {
         "username_email": "用户输入的邮箱",
         "password": "用户输入的密码"
@@ -118,10 +121,10 @@ def login_api():
         return jsonify({"code": 500, "message": f"登录失败: {str(e)}"}), 500
 
 
-@authRouter.route('/logout', methods=['GET'])
+@auth_bp.route('/logout', methods=['GET'])
 def logout():
     """
-    POST /auth/logout
+    POST /api/auth/logout
     
     处理登出请求
         - 注意: JWT是无状态的, 客户端应该删除存储的令牌

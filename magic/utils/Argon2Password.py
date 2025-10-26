@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#lmoadll_bl platform
+#
+#@copyright  Copyright (c) 2025 lmoadll_bl team
+#@license  GNU General Public License 3.0
 """
 密码哈希和验证模块
 
@@ -19,11 +23,11 @@ __all__ = [
 
 # 创建PasswordHasher实例
 ph = PasswordHasher(
-    time_cost=2,      # 迭代次数，推荐2-4
+    time_cost=2,         # 迭代次数，推荐2-4
     memory_cost=102400,  # 内存开销（单位KB，如100MB）
-    parallelism=2,    # 并行线程数
-    hash_len=32,      # 输出哈希长度（字节）
-    salt_len=16       # 盐值长度（字节）
+    parallelism=2,       # 并行线程数
+    hash_len=32,         # 输出哈希长度（字节）
+    salt_len=16          # 盐值长度（字节）
 )
 
 

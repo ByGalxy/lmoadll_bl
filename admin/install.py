@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
+#lmoadll_bl platform
+#
+#@copyright  Copyright (c) 2025 lmoadll_bl team
+#@license  GNU General Public License 3.0
+
+
 import os
 import random
 import string
 from flask import Blueprint, Response, request, send_file, jsonify, abort
 from functools import wraps
-from var.TomlConfig import DoesitexistConfigToml, WriteConfigToml
-from var.Argon2Password import HashPassword
-from var.sql.LmoadllOrm import (
+from magic.utils.TomlConfig import DoesitexistConfigToml, WriteConfigToml
+from magic.utils.Argon2Password import HashPassword
+from magic.utils.LmoadllOrm import (
     db_orm,
     UserModel,
     OptionModel,
@@ -17,7 +23,7 @@ from var.sql.LmoadllOrm import (
 
 
 
-installRouter = Blueprint("install", __name__, url_prefix="/install")
+install_bp = Blueprint("install", __name__, url_prefix="/install")
 
 
 def install_permissions(f):
@@ -31,13 +37,13 @@ def install_permissions(f):
     return per_install
 
 
-@installRouter.route("/", methods=["GET"])
+@install_bp.route("/", methods=["GET"])
 @install_permissions
 def install_index() -> Response | None:
-    return send_file("install/base/install.html")
+    return send_file("admin/base/install.html")
 
 
-@installRouter.route("/check_database_configuration", methods=["POST"])
+@install_bp.route("/check_database_configuration", methods=["POST"])
 @install_permissions
 def check_database_configuration() -> None:
     """判断是否有配置过数据库"""
@@ -50,7 +56,7 @@ def check_database_configuration() -> None:
         pass
 
 
-@installRouter.route("/get_sqlite_path", methods=["POST"])
+@install_bp.route("/get_sqlite_path", methods=["POST"])
 @install_permissions
 def get_sqlite_path() -> Response:
     """获取数据库路径, 自动生成路径and return"""
@@ -58,21 +64,21 @@ def get_sqlite_path() -> Response:
     db_type = data.get("db_type")
 
     if db_type == "sqlite":
-        usr_dir = "usr"
-        os.makedirs(usr_dir, exist_ok=True)
+        content_dir = "contents"
+        os.makedirs(content_dir, exist_ok=True)
 
         random_name = "".join(
             random.choices(string.ascii_lowercase + string.digits, k=10)
         )
         db_filename = f"{random_name}.db"
-        default_path = os.path.abspath(os.path.join(usr_dir, db_filename))
+        default_path = os.path.abspath(os.path.join(content_dir, db_filename))
 
         return jsonify({"path": default_path})
 
     return jsonify({"error": "无效的数据库类型"})
 
 
-@installRouter.route("/verification_db_conn", methods=["POST"])
+@install_bp.route("/verification_db_conn", methods=["POST"])
 @install_permissions
 def install_verification_db_conn() -> Response:
     """测试数据库连接并保持配置"""
@@ -81,15 +87,12 @@ def install_verification_db_conn() -> Response:
     if not data:
         return jsonify({"success": False, "message": "请求的数据为空"})
 
-    # 获取数据库类型
     db_type = data.get("db_type")
     if not db_type:
         return jsonify({"success": False, "message": "数据库类型不能为空"})
 
-    # 准备数据库配置参数
     db_config = {"db_prefix": data.get("db_prefix", "lmoadll_")}
 
-    # 根据数据库类型准备不同的配置
     if db_type == "sqlite":
         sql_sqlite_path = data.get("sql_sqlite_path")
         if not sql_sqlite_path:
@@ -130,7 +133,7 @@ def install_verification_db_conn() -> Response:
         return jsonify({"success": False, "message": f"数据库连接错误喵: {result[1]}"})
 
 
-@installRouter.route("/create_admin_account", methods=["POST"])
+@install_bp.route("/create_admin_account", methods=["POST"])
 @install_permissions
 def create_admin_account() -> Response | None:
     """创建超级管理员账号并保存配置"""
@@ -177,7 +180,6 @@ def create_admin_account() -> Response | None:
                     {"success": False, "message": "SQLite数据库路径不能为空"}
                 )
 
-            # 保存网站配置到数据库
             GetOrSetSiteOption(db_prefix, sql_sqlite_path, "site_name", site_name)
             GetOrSetSiteOption(db_prefix, sql_sqlite_path, "site_url", site_url)
 
@@ -195,7 +197,7 @@ def create_admin_account() -> Response | None:
                     {"success": False, "message": f"创建管理员账号失败: {result[1]}"}
                 )
         elif db_type == "mysql":
-            # 使用ORM系统的新方式创建MySQL数据库的超级管理员
+            # 使用ORM系统的创建MySQL数据库的超级管理员
             db_host = data.get("db_host", "localhost")
             db_port = data.get("db_port", 3306)
             db_name = data.get("db_name", "")
@@ -267,7 +269,7 @@ def create_admin_account() -> Response | None:
             finally:
                 db.disconnect()
         elif db_type == "postgresql":
-            # 使用ORM系统的新方式创建PostgreSQL数据库的超级管理员
+            # 使用ORM系统创建PostgreSQL数据库的超级管理员
             db_host = data.get("db_host", "localhost")
             db_port = data.get("db_port", 5432)
             db_name = data.get("db_name", "")
@@ -349,6 +351,6 @@ def create_admin_account() -> Response | None:
         # 关闭安装模式
         WriteConfigToml("server", "install", False)
 
-        return jsonify({"success": True, "message": "超级管理员账号创建成功"})
+        return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "message": f"创建管理员账号失败: {str(e)}"})

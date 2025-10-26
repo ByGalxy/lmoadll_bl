@@ -7,7 +7,7 @@ function fetchoptions() {
 
     if (site_name || site_description || site_keywords || enable_registration) {
         // 获取网站名称
-        fetch('/admin/get_name_options', {
+        fetch('/api/admin/get_name_options', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -21,7 +21,7 @@ function fetchoptions() {
             });
 
         // 获取网站描述
-        fetch('/admin/get_name_options', {
+        fetch('/api/admin/get_name_options', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -35,7 +35,7 @@ function fetchoptions() {
             });
 
         // 获取网站关键词
-        fetch('/admin/get_name_options', {
+        fetch('/api/admin/get_name_options', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -50,7 +50,7 @@ function fetchoptions() {
 
         // 获取是否允许用户注册设置
         if (enable_registration) {
-            fetch('/admin/get_name_options', {
+            fetch('/api/admin/get_name_options', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -74,7 +74,7 @@ function saveSettings() {
     const site_keywords = document.querySelector('#site-keywords').value;
     const enable_registration = document.querySelector('#enable-registration').checked;
 
-    fetch('/admin/set_name_options', {
+    fetch('/api/admin/set_name_options', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

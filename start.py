@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+#lmoadll_bl platform
+#
+#@copyright  Copyright (c) 2025 lmoadll_bl team
+#@license  GNU General Public License 3.0
+
+
 import os
 import sys
 import argparse
@@ -82,12 +88,12 @@ def main():
         except KeyboardInterrupt:
             process.terminate()
             process.wait()
-            print("\n服务器已停止")
+            print("\n服务器已停止喵")
             
     except KeyboardInterrupt:
-        print("\n服务器已停止")
+        print("\n服务器已停止喵")
     except Exception as e:
-        print(f"\n❌ 启动失败: {e}")
+        print(f"\n❌ 启动失败喵: {e}")
         sys.exit(1)
 
 

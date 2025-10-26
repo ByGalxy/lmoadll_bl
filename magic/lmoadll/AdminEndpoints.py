@@ -1,69 +1,28 @@
-"""
--*- coding: utf-8 -*-
-系统后台管理
+# -*- coding: utf-8 -*-
+#lmoadll_bl platform
+#
+#@copyright  Copyright (c) 2025 lmoadll_bl team
+#@license  GNU General Public License 3.0
 
-为了区分普通用户和管理员, 此管理面板为管理员专属;
-普通用户应该另开, 而不是使用管理员面板.
-"""
 
-from flask import Blueprint, send_file, Response, redirect, url_for, request
-from functools import wraps
-from var.token import GetCurrentUserIdentity
-from var.TomlConfig import DoesitexistConfigToml
-from var.sql.LmoadllOrm import (
+from flask import Blueprint, Response, request
+from admin import admin_required
+from magic.utils.token import GetCurrentUserIdentity
+from magic.utils.TomlConfig import DoesitexistConfigToml
+from magic.utils.LmoadllOrm import (
     GetUserRoleByIdentity,
     GetUserCount,
     GetUserNameByIdentity,
     GetSiteOptionByName,
-    GetOrSetSiteOption
+    GetOrSetSiteOption,
+    SearchUsers
 )
 
 
-
-adminRouter = Blueprint('admin', __name__, url_prefix='/admin')
-
-
-# 没权限就想来? 没门()
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        # 先检查用户是否登录
-        user_identity = GetCurrentUserIdentity()
-        if user_identity is None:
-            # 用户未登录，重定向到登录页面
-            original_path = request.path
-            if request.query_string:
-                original_path = f"{original_path}?{request.query_string.decode('utf-8')}"
-            return redirect(url_for('login.login_page', redirect=original_path))
-        
-        try:
-            user_group = GetUserRoleByIdentity(user_identity)
-            # 检查用户角色
-            if user_group[0] in ['superadministrator', 'administrator']:
-                # 用户是管理员，继续执行原函数
-                return f(*args, **kwargs)
-            else:
-                # 用户不是管理员，重定向到首页
-                return redirect('/')
-        except Exception as e:
-            print(f"获取用户信息时出错: {e}")
-            return redirect('/')
-    return decorated_function
+admin_bp = Blueprint('admin', __name__)
 
 
-@adminRouter.route('/', methods=['GET'])
-@admin_required
-def admin_index() -> Response:
-    return send_file('admin/base/admin.html')
-
-
-@adminRouter.route('/options-general', methods=['GET'])
-@admin_required
-def admin_options_general() -> Response:
-    return send_file('admin/base/options-general.html')
-
-
-@adminRouter.route('/user_count', methods=['POST'])
+@admin_bp.route('/user_count', methods=['POST'])
 @admin_required
 def admin_get_user_count() -> Response:
     """get user count"""
@@ -71,7 +30,7 @@ def admin_get_user_count() -> Response:
     return Response(str(user_count), mimetype='text/plain')
 
 
-@adminRouter.route('/get_admin_name', methods=['POST'])
+@admin_bp.route('/get_admin_name', methods=['POST'])
 @admin_required
 def admin_get_admin_name() -> Response:
     """get admin name"""
@@ -80,10 +39,8 @@ def admin_get_admin_name() -> Response:
         return Response("Unknown", mimetype='text/plain')
     
     try:
-        # 先检查用户是否有管理员权限
         user_group = GetUserRoleByIdentity(user_identity)
         if user_group and user_group[0] in ['superadministrator', 'administrator']:
-            # 获取用户名
             user_name = GetUserNameByIdentity(user_identity)
             if user_name and user_name[0]:
                 return Response(user_name[0], mimetype='text/plain')
@@ -93,7 +50,7 @@ def admin_get_admin_name() -> Response:
         return Response("Unknown", mimetype='text/plain')
 
 
-@adminRouter.route('/get_admin_identity', methods=['POST'])
+@admin_bp.route('/get_admin_identity', methods=['POST'])
 @admin_required
 def admin_get_admin_identity() -> Response:
     """get admin Identity"""
@@ -104,7 +61,6 @@ def admin_get_admin_identity() -> Response:
     try:
         user_group = GetUserRoleByIdentity(user_identity)
         if user_group and len(user_group) > 0:
-            # 检查用户角色
             if user_group[0] == 'superadministrator':
                 return Response('超级管理员', mimetype='text/plain')
             elif user_group[0] == 'administrator':
@@ -115,16 +71,10 @@ def admin_get_admin_identity() -> Response:
         return Response('Unknown', mimetype='text/plain')
 
 
-@adminRouter.route('/get_name_options', methods=['POST'])
+@admin_bp.route('/get_name_options', methods=['POST'])
 @admin_required
 def admin_get_name_options() -> Response:
-    """
-    P26
-
-    get name options
-
-    查询全局设置
-    """
+    """get name options"""
     try:
         option_name = request.json.get('user').strip()
         name_options = GetSiteOptionByName(option_name) # [True, {"name": name, "user": user, "value": value}]
@@ -137,7 +87,38 @@ def admin_get_name_options() -> Response:
         return Response('Unknown', mimetype='text/plain')
 
 
-@adminRouter.route('/set_name_options', methods=['POST'])
+@admin_bp.route('/users/search', methods=['GET'])
+@admin_required
+def admin_search_users() -> Response:
+    """搜索用户API"""
+    # 获取搜索关键词
+    keyword = request.args.get('q', '').strip()
+    
+    if not keyword:
+        return Response('{"users": []}', mimetype='application/json')
+    
+    try:
+        results = SearchUsers(keyword)
+        
+        if isinstance(results, list) and results and isinstance(results[0], dict):
+            import json
+            return Response(json.dumps({"users": results}), mimetype='application/json')
+        elif isinstance(results, list) and not results:
+            return Response('{"users": []}', mimetype='application/json')
+        else:
+            return Response('{"users": []}', mimetype='application/json')
+    except Exception as e:
+        print(f"搜索用户API出错: {e}")
+        return Response('{"users": []}', mimetype='application/json')
+
+
+@admin_bp.route("/user/me", methods=['GET'])
+@admin_required
+def admin_me_user() -> Response:
+    """获取用户当前的信息"""
+    pass
+
+@admin_bp.route('/set_name_options', methods=['POST'])
 @admin_required
 def admin_set_name_options() -> Response:
     """set name options"""

@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
+#lmoadll_bl platform
+#
+#@copyright  Copyright (c) 2025 lmoadll_bl team
+#@license  GNU General Public License 3.0
+"""
+管理员专属登录页面
+"""
+
 from flask import Blueprint, send_file, request, redirect
-from var.token import GetCurrentUserIdentity
+from magic.utils.token import GetCurrentUserIdentity
 
 
 
-loginRouter = Blueprint('login', __name__, url_prefix='/login')
+login_bp = Blueprint('login', __name__, url_prefix='/login')
 
 
-@loginRouter.route('/', methods=["GET"])
+@login_bp.route('/', methods=["GET"])
 def login_page():
     """
     如果已经登录, 则重定向;

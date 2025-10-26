@@ -7,7 +7,7 @@ function fetchDashboardData() {
 
     if (totalUsersElement || onlineUsersElement || totalVisitsElement || conversionRateElement) {
         // 获取管理员名称
-        fetch('/admin/get_admin_name', {
+        fetch('/api/admin/get_admin_name', {
             method: 'POST',
             credentials: 'same-origin'
         })
@@ -31,7 +31,7 @@ function fetchAdminInfo() {
 
     if (adminNameElement || adminIdentityElement) {
         // 获取管理员名称
-        fetch('/admin/get_admin_name', {
+        fetch('/api/admin/get_admin_name', {
             method: 'POST',
             credentials: 'same-origin'
         })
@@ -46,7 +46,7 @@ function fetchAdminInfo() {
             });
 
         // 获取管理员身份
-        fetch('/admin/get_admin_identity', {
+        fetch('/api/admin/get_admin_identity', {
             method: 'POST',
             credentials: 'same-origin'
         })
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
         logoutButton.addEventListener('click', function () {
             if (confirm('确定要退出登录吗？')) {
                 // 发送退出登录请求到服务器
-                fetch('/auth/logout', {
+                fetch('/api/auth/logout', {
                     method: 'GET',
                     credentials: 'same-origin'
                 })
@@ -184,18 +184,6 @@ document.addEventListener('DOMContentLoaded', function () {
             this.textContent = type === 'password' ? '显示' : '隐藏';
         });
     });
-
-    // 搜索功能
-    const searchInput = document.querySelector('.search-bar input');
-
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            const searchTerm = this.value.toLowerCase();
-            console.log('搜索:', searchTerm);
-
-            // 实际项目中，这里应该实现搜索逻辑
-        });
-    }
 
     // 页面滚动监听
     window.addEventListener('scroll', function () {

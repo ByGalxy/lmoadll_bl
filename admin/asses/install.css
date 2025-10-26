@@ -96,21 +96,21 @@ label {
 /* 主要按钮样式 - Twitter蓝色 */
 .primary-btn {
     display: inline-block;
-    background-color: #1DA1F2;
+    background-color: #000000;
     color: white;
     border: none;
-    border-radius: 28px;
-    padding: 12px 24px;
-    font-size: 16px;
+    border-radius: 9px;
+    padding: 5px 20px;
+    font-size: 14px;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
-    min-width: 150px;
+    min-width: 120px;
 }
 
 .primary-btn:hover:not(.disabled) {
-    background-color: #1a91da;
+    background-color: #5a5b5b;
 }
 
 .primary-btn:active:not(.disabled) {
@@ -148,8 +148,8 @@ form {
 .form-control,
 .form-select {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #e1e8ed;
+    padding: 6px 10px;
+    border: 2px solid #e1e8ed;
     border-radius: 8px;
     font-size: 14px;
     background-color: #ffffff;
@@ -169,9 +169,9 @@ form {
 
 /* 辅助文本 */
 .form-text {
-    font-size: 12px;
+    font-size: 10px;
     color: #657786;
-    margin-top: 4px;
+    margin-top: 2px;
     display: block;
     word-wrap: break-word;
     white-space: normal;

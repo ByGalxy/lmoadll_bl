@@ -4,12 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>设置 - Lmoadll</title>
+    <title>用户管理 - Lmoadll</title>
     <link rel="stylesheet" href="/asses/admin/admin.css">
+    <link rel="stylesheet" href="/asses/admin/usermanagement.css">
+</head>
+
+<body>
     <svg width="0" height="0" class="hidden">
         <symbol id="icon-dashboard" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-            <path d="M858.666667 128A80 80 0 0 1 938.666667 208V810.666667a85.333333 85.333333 0 0 1-85.333334 85.333333H170.666667a85.333333 85.333333 0 0 1-85.333334-85.333333V208A80 80 0 0 1 165.333333 128h693.333334zM853.333333 213.333333H170.666667v597.333334h682.666666V213.333333z m-423.125333 148.48l163.712 170.368 119.061333-153.045333a42.666667 42.666667 0 0 1 55.466667-10.496l4.416 3.008a42.666667 42.666667 0 0 1 10.496 55.466667l-3.008 4.416-179.626667 230.933333-164.202666-170.944-104.362667 132.266667a42.666667 42.666667 0 0 1-55.530667 10.090666l-4.394666-3.050666a42.666667 42.666667 0 0 1-10.112-55.530667l3.050666-4.394667 165.034667-209.109333z" fill="#000000"></path>
+            <path
+                d="M858.666667 128A80 80 0 0 1 938.666667 208V810.666667a85.333333 85.333333 0 0 1-85.333334 85.333333H170.666667a85.333333 85.333333 0 0 1-85.333334-85.333333V208A80 80 0 0 1 165.333333 128h693.333334zM853.333333 213.333333H170.666667v597.333334h682.666666V213.333333z m-423.125333 148.48l163.712 170.368 119.061333-153.045333a42.666667 42.666667 0 0 1 55.466667-10.496l4.416 3.008a42.666667 42.666667 0 0 1 10.496 55.466667l-3.008 4.416-179.626667 230.933333-164.202666-170.944-104.362667 132.266667a42.666667 42.666667 0 0 1-55.530667 10.090666l-4.394666-3.050666a42.666667 42.666667 0 0 1-10.112-55.530667l3.050666-4.394667 165.034667-209.109333z"
+                fill="#000000"></path>
         </symbol>
+
         <symbol id="icon-users" viewBox="0 0 24 24">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="2" />
             <circle cx="9" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2" />
@@ -36,10 +43,22 @@
             <circle cx="12" cy="12" r="2" fill="currentColor" />
             <circle cx="12" cy="18" r="2" fill="currentColor" />
         </symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="m21 21-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" />
+        </symbol>
+        <symbol id="icon-close" viewBox="0 0 24 24">
+            <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" />
+        </symbol>
+        <symbol id="icon-filter" viewBox="0 0 24 24">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" fill="none" stroke="currentColor"
+                stroke-width="2" />
+        </symbol>
+        <symbol id="icon-add" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" />
+        </symbol>
     </svg>
-</head>
 
-<body>
     <!-- 侧边导航栏 -->
     <div class="sidebar" id="sidebar">
         <a href="/admin" class="nav-item">
@@ -49,7 +68,7 @@
             <span>仪表盘</span>
         </a>
 
-        <a href="/admin/usermanagement" class="nav-item">
+        <a href="/admin/usermanagement" class="nav-item active">
             <span class="nav-icon"><svg>
                     <use href="#icon-users"></use>
                 </svg></span>
@@ -63,7 +82,7 @@
             <span>消息</span>
         </a>
 
-        <a href="/admin/options-general" class="nav-item active">
+        <a href="/admin/options-general" class="nav-item">
             <span class="nav-icon"><svg>
                     <use href="#icon-settings"></use>
                 </svg></span>
@@ -87,59 +106,46 @@
 
     <!-- 主要内容区域 -->
     <div class="main-content">
-        <!-- 顶部导航栏 -->
-        <div class="header">
-            <div class="navbar-left">
-                <h1 class="page-title">设置</h1>
+        <div class="content-header">
+            <h1 class="page-title">用户</h1>
+            <div class="header-actions">
+                <div class="search-container">
+                    <div class="search-box">
+                        <svg class="search-icon">
+                            <use href="#icon-search"></use>
+                        </svg>
+                        <input type="text" id="user-search" class="search-input" placeholder="搜索用户ID、姓名或邮箱..." />
+                        <button class="search-clear" id="search-clear">
+                            <svg width="16" height="16">
+                                <use href="#icon-close"></use>
+                            </svg>
+                        </button>
+                        <div class="search-loading" id="search-loading"></div>
+                    </div>
+                    <div class="search-hint" id="search-hint">
+                        <p>搜索提示：</p>
+                        <ul>
+                            <li>输入用户ID进行精确搜索</li>
+                            <li>输入姓名或邮箱进行模糊搜索</li>
+                            <li>至少输入2个字符开始搜索</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- 设置表单 -->
-        <div class="settings-form">
-            <div class="form-section">
-                <h2 class="form-section-title">基本设置</h2>
-
-                <div class="form-group">
-                    <label class="form-label" for="site-name">网站名称</label>
-                    <input type="text" id="site-name" class="form-input" placeholder="请输入网站名称">
+        <div class="content-body">
+            <div class="users-container">
+                <div class="no-users" id="no-users-message">
+                    <p>请输入关键词搜索用户</p>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="site-description">网站描述</label>
-                    <textarea id="site-description" class="form-textarea" placeholder="请输入网站描述"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="site-keywords">关键词</label>
-                    <input type="text" id="site-keywords" class="form-input" placeholder="请输入关键词，多个关键词用逗号分隔">
-                </div>
+                <div class="users-list" id="users-list" style="display: none;"></div>
             </div>
-
-            <div class="form-section">
-                <h2 class="form-section-title">其他设置</h2>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="enable-registration">
-                    <label for="enable-registration">允许用户注册</label>
-                </div>
-
-                <!-- <div class="form-group">
-                    <label class="form-label" for="posts-per-page">每页显示文章数</label>
-                    <select id="posts-per-page" class="form-select">
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="15">15</option>
-                        <option value="20">20</option>
-                        <option value="25">25</option>
-                    </select>
-                </div> -->
-            </div>
-
-            <button type="submit" class="submit-btn">保存设置</button>
         </div>
     </div>
+
     <script src="/asses/admin/admin.js"></script>
-    <script src="/asses/admin/options-general.js"></script>
+    <script src="/asses/admin/usermanagement.js"></script>
 </body>
 
 </html>

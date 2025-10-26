@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setLoading(true);
 
         // 使用fetch API发送登录请求
-        fetch('/auth/login', {
+        fetch('/api/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

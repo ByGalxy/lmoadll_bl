@@ -92,7 +92,6 @@ if (toStep4Btn && step3 && step4) {
                 // 创建成功，跳转到完成页面
                 step3.style.display = 'none';
                 step4.style.display = 'block';
-                alert(data.message);
             } else {
                 alert('创建失败: ' + data.message);
             }
@@ -182,7 +181,6 @@ if (testConnBtn) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('数据库连接成功!');
                     if (document.getElementById('step-2') && document.getElementById('step-3')) {
                         document.getElementById('step-2').style.display = 'none';
                         document.getElementById('step-3').style.display = 'block';
