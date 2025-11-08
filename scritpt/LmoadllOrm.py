@@ -4,14 +4,14 @@
 #@copyright  Copyright (c) 2025 lmoadll_bl team
 #@license  GNU General Public License 3.0
 """
-目前支持SQLite、MySQL、PostgreSQL数据库
+目前支持SQLite、MySQL、PostgresSQL数据库
 """
 
 import os
 import threading
 import time
 from queue import Queue, Empty
-from magic.utils.TomlConfig import DoesitexistConfigToml, WriteConfigToml
+from toml_config import coexistent_config_toml, write_config_toml
 
 try:
     import sqlite3
@@ -479,8 +479,9 @@ class MySQLAdapter(DatabaseAdapter):
         self.conn.rollback()
 
 
+# noinspection SpellCheckingInspection
 class PostgreSQLAdapter(DatabaseAdapter):
-    """PostgreSQL数据库适配器"""
+    """PostgresSQL数据库适配器"""
 
     def __init__(self, config):
         super().__init__(config)
@@ -673,7 +674,7 @@ class Model:
             return db.fetchone()[0]
         elif db.config.get("type") == "postgresql":
             db.execute(
-                "SELECT CURRVAL(pg_get_serial_sequence('%s', '%s'))"
+                "SELECT CURVEBALL(pg_get_serial_sequence('%s', '%s'))"
                 % (table_name, cls._primary_key)
             )
             return db.fetchone()[0]
@@ -804,7 +805,7 @@ db_orm = ORM()
 
 
 def CheckSuperadminExists(
-    db_prefix, sql_sqlite_path, admin_username, admin_email, admin_password
+        db_prefix, sql_sqlite_path, admin_username, admin_email, admin_password
 ):
     """检查超级管理员是否存在"""
     db = None
@@ -891,9 +892,9 @@ def InitVerificationDbConn(db_type, **kwargs):
             db_prefix = kwargs.get("db_prefix", "")
 
             # 保存配置
-            WriteConfigToml("db", "sql_rd", "sqlite3")
-            WriteConfigToml("db", "sql_prefix", db_prefix)
-            WriteConfigToml("db", "sql_sqlite_path", db_path)
+            write_config_toml("db", "sql_rd", "sqlite3")
+            write_config_toml("db", "sql_prefix", db_prefix)
+            write_config_toml("db", "sql_sqlite_path", db_path)
 
             # 注册数据库
             db_orm.register_db(
@@ -915,8 +916,8 @@ def InitVerificationDbConn(db_type, **kwargs):
             db_prefix = kwargs.get("db_prefix", "")
 
             # 保存配置
-            WriteConfigToml("db", "sql_rd", "mysql")
-            WriteConfigToml("db", "sql_prefix", db_prefix)
+            write_config_toml("db", "sql_rd", "mysql")
+            write_config_toml("db", "sql_prefix", db_prefix)
 
             # 注册数据库
             db_orm.register_db(
@@ -947,8 +948,8 @@ def InitVerificationDbConn(db_type, **kwargs):
             db_prefix = kwargs.get("db_prefix", "")
 
             # 保存配置
-            WriteConfigToml("db", "sql_rd", "postgresql")
-            WriteConfigToml("db", "sql_prefix", db_prefix)
+            write_config_toml("db", "sql_rd", "postgresql")
+            write_config_toml("db", "sql_prefix", db_prefix)
 
             # 注册数据库
             db_orm.register_db(
@@ -979,8 +980,8 @@ def InitVerificationDbConn(db_type, **kwargs):
 def GetDbConnection(tablename=None):
     """从连接池获取数据库连接"""
     try:
-        db_type = DoesitexistConfigToml("db", "sql_rd")
-        db_prefix = DoesitexistConfigToml("db", "sql_prefix")
+        db_type = coexistent_config_toml("db", "sql_rd")
+        db_prefix = coexistent_config_toml("db", "sql_prefix")
 
         if not db_type or not db_prefix:
             return [False, "数据库配置缺失", None, None, None]
@@ -989,7 +990,7 @@ def GetDbConnection(tablename=None):
         if "default" not in db_orm._pools:
             # 根据数据库类型获取配置并注册
             if db_type == "sqlite3":
-                sql_sqlite_path = DoesitexistConfigToml("db", "sql_sqlite_path")
+                sql_sqlite_path = coexistent_config_toml("db", "sql_sqlite_path")
                 if not sql_sqlite_path:
                     return [False, "SQLite路径配置缺失", None, None, None]
 
@@ -1000,11 +1001,11 @@ def GetDbConnection(tablename=None):
                 )
             elif db_type == "mysql":
                 # 从配置中获取MySQL连接信息
-                db_host = DoesitexistConfigToml("db", "sql_host", "localhost")
-                db_port = DoesitexistConfigToml("db", "sql_port", 3306)
-                db_name = DoesitexistConfigToml("db", "sql_database", "lmoadll_bl")
-                db_user = DoesitexistConfigToml("db", "sql_user", "root")
-                db_password = DoesitexistConfigToml("db", "sql_password", "")
+                db_host = coexistent_config_toml("db", "sql_host", "localhost")
+                db_port = coexistent_config_toml("db", "sql_port", 3306)
+                db_name = coexistent_config_toml("db", "sql_database", "lmoadll_bl")
+                db_user = coexistent_config_toml("db", "sql_user", "root")
+                db_password = coexistent_config_toml("db", "sql_password", "")
 
                 db_orm.register_db(
                     "default",
@@ -1021,11 +1022,11 @@ def GetDbConnection(tablename=None):
                 )
             elif db_type == "postgresql":
                 # 从配置中获取PostgreSQL连接信息
-                db_host = DoesitexistConfigToml("db", "sql_host", "localhost")
-                db_port = DoesitexistConfigToml("db", "sql_port", 5432)
-                db_name = DoesitexistConfigToml("db", "sql_database", "lmoadll_bl")
-                db_user = DoesitexistConfigToml("db", "sql_user", "postgres")
-                db_password = DoesitexistConfigToml("db", "sql_password", "")
+                db_host = coexistent_config_toml("db", "sql_host", "localhost")
+                db_port = coexistent_config_toml("db", "sql_port", 5432)
+                db_name = coexistent_config_toml("db", "sql_database", "lmoadll_bl")
+                db_user = coexistent_config_toml("db", "sql_user", "postgres")
+                db_password = coexistent_config_toml("db", "sql_password", "")
 
                 db_orm.register_db(
                     "default",
@@ -1054,7 +1055,7 @@ def GetDbConnection(tablename=None):
 
 
 def GetOrSetSiteOption(
-    db_prefix, sql_sqlite_path, option_name, option_value=None, user_id=0
+        db_prefix, sql_sqlite_path, option_name, option_value=None, user_id=0
 ):
     """获取或设置网站选项"""
     db = None
@@ -1122,7 +1123,7 @@ def GetSiteOptionByName(option_name):
         return [False, message]
 
     try:
-        db_prefix = DoesitexistConfigToml("db", "sql_prefix")
+        db_prefix = coexistent_config_toml("db", "sql_prefix")
         if not db_prefix:
             return [False, "数据库前缀配置缺失"]
 
@@ -1259,7 +1260,7 @@ def SearchUsers(keyword):
     """
     根据关键词搜索用户
     支持搜索用户ID、姓名或邮箱
-    
+
     :param keyword: 搜索关键词
     :return: 用户列表或错误信息
     """
@@ -1274,16 +1275,16 @@ def SearchUsers(keyword):
             user_id = int(keyword)
         except ValueError:
             pass
-        
+
         if user_id is not None:
             # 根据用户ID精确搜索
             db.execute(f"SELECT uid, name, mail FROM {table_name} WHERE uid = ?", (user_id,))
         else:
             # 根据姓名或邮箱模糊搜索
             search_pattern = f"%{keyword}%"
-            db.execute(f"SELECT uid, name, mail FROM {table_name} WHERE name LIKE ? OR mail LIKE ? LIMIT 50", 
-                      (search_pattern, search_pattern))
-        
+            db.execute(f"SELECT uid, name, mail FROM {table_name} WHERE name LIKE ? OR mail LIKE ? LIMIT 50",
+                       (search_pattern, search_pattern))
+
         users = db.fetchall()
         # 转换为字典列表
         user_list = []
