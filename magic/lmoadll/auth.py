@@ -12,7 +12,7 @@
 from flask import Blueprint, request, jsonify, redirect, url_for
 from functools import wraps
 from magic.utils.Argon2Password import VerifyPassword
-from magic.utils.token import CreateJwtToken, GetCurrentUserIdentity
+from magic.utils.token import CreateTokens, RefreshToken, GetCurrentUserIdentity
 from magic.utils.TomlConfig import DoesitexistConfigToml
 from magic.utils.LmoadllOrm import GetUserByEmail
 
@@ -87,15 +87,23 @@ def login_api():
         if not VerifyPassword(user['password'], password):
             return jsonify({"code": 401, "message": "邮箱或密码错误喵喵"}), 401
         
-        # 生成JWT令牌，确保用户ID是字符串类型
-        access_token = CreateJwtToken(identity=str(user['uid']))
-        if not access_token:
+        # 生成双令牌，确保用户ID是字符串类型
+        tokens = CreateTokens(identity=str(user['uid']))
+        if not tokens:
             return jsonify({"code": 500, "message": "生成令牌失败喵喵"}), 500
         
+        access_token = tokens['lmoadllUser']
+        refresh_token = tokens['lmoadll_refresh_token']
+        
+        # 从配置中获取access token过期时间(分钟)
+        access_expires_in = 15  # 默认15分钟
+        
         # 设置JWT令牌到cookie中，设置httponly防止XSS攻击
+        # 安全改进：不在JSON响应中返回token，只通过cookie传递
         response = jsonify({
             "code": 200,
-            "message": "登录成功喵"
+            "message": "登录成功喵",
+            "expires_in": access_expires_in * 60  # 转换为秒
         })
         
         """
@@ -106,12 +114,24 @@ def login_api():
             如果开发环境, 发现浏览器保存Cookie, 请检查是否开启了secure选项.
             如果是生产环境, 网站建议使用HTTPS协议并打开secure选项.
         """
+        # 存储lmoadll_refresh_token到cookie，访问受限制
+        # 安全改进：设置SameSite为Strict
         response.set_cookie(
-            'access_token', 
+            'lmoadll_refresh_token', 
+            refresh_token,
+            httponly=True,
+            secure=True,
+            samesite='Strict'
+        )
+        
+        # 存储lmoadllUser到cookie，方便前端自动携带
+        # 安全改进：设置SameSite为Strict
+        response.set_cookie(
+            'lmoadllUser', 
             access_token,
             httponly=True,
             secure=True,
-            samesite='Lax'
+            samesite='Strict'
         )
 
         return response, 200
@@ -121,24 +141,71 @@ def login_api():
         return jsonify({"code": 500, "message": f"登录失败: {str(e)}"}), 500
 
 
-@auth_bp.route('/logout', methods=['GET'])
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh_api():
+    """
+    POST /api/auth/refresh
+      
+     使用lmoadll_refresh_token刷新access token
+     
+     请求格式：仅接受从cookie中获取lmoadll_refresh_token
+    
+    响应格式：
+    成功: {"code": 200, "message": "令牌刷新成功", "expires_in": 900}
+    失败: {"code": 错误码, "message": "错误信息"}
+    """
+    try:
+        # 安全改进：仅从cookie中获取refresh token，移除从请求体获取的路径
+        refresh_token = request.cookies.get('lmoadll_refresh_token')
+        
+        if not refresh_token:
+            return jsonify({"code": 400, "message": "缺少lmoadll_refresh token喵喵"}), 400
+        
+        # 刷新access token，传入请求上下文以进行额外验证
+        new_access_token = RefreshToken(refresh_token, request)
+        if not new_access_token:
+            return jsonify({"code": 401, "message": "无效的refresh token喵喵"}), 401
+        
+        # 从配置中获取access token过期时间（分钟）
+        access_expires_in = 15  # 默认15分钟
+        
+        # 安全改进：不在JSON响应中返回token
+        response = jsonify({
+            "code": 200,
+            "message": "令牌刷新成功喵",
+            "expires_in": access_expires_in * 60  # 转换为秒
+        })
+        
+        # 更新cookie中的lmoadllUser
+        response.set_cookie(
+            'lmoadllUser', 
+            new_access_token,
+            httponly=True,
+            secure=True,
+            samesite='Lax'
+        )
+        
+        return response, 200
+    except Exception as e:
+        print(f"刷新令牌过程中出现错误喵: {e}")
+        return jsonify({"code": 500, "message": f"刷新失败: {str(e)}"}), 500
+
+
+@auth_bp.route('/logout', methods=['POST'])
 def logout():
     """
     POST /api/auth/logout
     
     处理登出请求
-        - 注意: JWT是无状态的, 客户端应该删除存储的令牌
-        - JWT是无状态的, 服务器端不需要特殊处理
-        - 客户端应该删除存储的令牌
+    - 清除cookie中的access_token和refresh_token
+    - 客户端也应该删除本地存储的令牌
     """
     try:
-        # 创建响应对象
-        response = jsonify({"code": 200, "message": "登出成功"})
+        response = jsonify({"code": 200, "message": "登出成功喵"})
         
-        # 清除cookie中的令牌
-        response.delete_cookie('access_token')
+        response.delete_cookie('lmoadllUser')
+        response.delete_cookie('lmoadll_refresh_token')
         
-        # 可选：清除localStorage中的用户信息（在前端处理）
         return response, 200
     except Exception as e:
         print(f"登出过程中出现错误喵: {e}")

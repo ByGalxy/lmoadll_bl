@@ -17,6 +17,7 @@ from datetime import datetime, timezone, timedelta
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
+    create_refresh_token,
     get_jwt_identity,
     verify_jwt_in_request,
     decode_token
@@ -26,7 +27,9 @@ from flask_jwt_extended import (
 
 __all__ = [
     'InitJwtManager',
+    'CreateTokens',
     'CreateJwtToken',
+    'RefreshToken',
     'GetCurrentUserIdentity'
 ]
 
@@ -87,7 +90,8 @@ def InitJwtManager(app):
     if not app.config.get('JWT_SECRET_KEY'):
         app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)
     
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=7)
     
     jwt = JWTManager(app)
     
@@ -98,13 +102,13 @@ def InitJwtManager(app):
     
     @jwt.decode_key_loader
     def decode_key_callback(header, payload):
-        """解码时智能选择密钥"""
-        # 获取所有有效密钥
+        """
+        解码时智能选择密钥, 获取所有有效密钥, 如果有令牌, 尝试自动选择正确的密钥
+        """
         valid_keys = jwt_key_manager.get_all_valid_keys()
         
-        # 如果有令牌，尝试自动选择正确的密钥
         auth_header = request.headers.get('Authorization', '')
-        cookie_token = request.cookies.get('access_token')
+        cookie_token = request.cookies.get('lmoadllUser')
         
         token = None
         if auth_header and auth_header.startswith('Bearer '):
@@ -113,7 +117,6 @@ def InitJwtManager(app):
             token = cookie_token
         
         if token:
-            # 尝试每个密钥来解码令牌
             for key in valid_keys:
                 try:
                     # 使用PyJWT手动验证
@@ -122,39 +125,141 @@ def InitJwtManager(app):
                     return key
                 except pyjwt.InvalidTokenError:
                     continue
-        
-        # 如果没有令牌或者所有密钥都失败，返回当前密钥(让库自己处理错误)
-        return jwt_key_manager.get_current_key()
+        return jwt_key_manager.get_current_key() # 如果没有令牌或者所有密钥都失败，返回当前密钥(让库自己处理错误)
     
     return jwt
 
 
-def CreateJwtToken(identity, additional_claims=None):
-    """创建访问令牌, 根据用户身份创建JWT访问令牌"""
+def CreateTokens(identity, additional_claims=None):
+    """创建双令牌, 同时生成Access Token和Refresh Token
+    
+    Args:
+        identity: 用户身份信息
+        additional_claims: 额外的声明信息
+    
+    Returns:
+        dict: 包含access_token和refresh_token的字典
+    """
     try:
         # 设置默认的额外声明
         if additional_claims is None:
-            additional_claims = {
-                'token_type': 'access',
-                'created_at': get_utc_now().isoformat()
-            }
+            additional_claims = {}
         
-        # 创建访问令牌
-        # 这里不需要手动指定密钥，flask-jwt-extended会自动使用encode_key_loader回调
+        # 为access token添加特定声明
+        access_claims = additional_claims.copy()
+        access_claims.update({
+            'token_type': 'access',
+            'created_at': get_utc_now().isoformat()
+        })
+        
+        # 为refresh token添加特定声明
+        refresh_claims = additional_claims.copy()
+        refresh_claims.update({
+            'token_type': 'refresh',
+            'created_at': get_utc_now().isoformat()
+        })
+        
+        # 创建访问令牌和刷新令牌
         access_token = create_access_token(
             identity=identity, 
-            additional_claims=additional_claims
+            additional_claims=access_claims
         )
-        return access_token
+        
+        refresh_token = create_refresh_token(
+            identity=identity, 
+            additional_claims=refresh_claims
+        )
+        
+        return {
+            'lmoadllUser': access_token,
+            'lmoadll_refresh_token': refresh_token
+        }
     except Exception:
         # print(f"创建JWT令牌失败喵: {e}")
         return None
 
 
-def GetCurrentUserIdentity():
-    """获取当前用户身份, 支持Cookie和Header两种方式"""
+def CreateJwtToken(identity, additional_claims=None):
+    """创建访问令牌, 根据用户身份创建JWT访问令牌(向后兼容)"""
     try:
-        # 首先尝试标准的JWT验证（从Authorization头获取）
+        # 调用新的双令牌创建函数，但只返回access token
+        tokens = CreateTokens(identity, additional_claims)
+        if tokens:
+            return tokens['lmoadllUser']
+        return None
+    except Exception:
+        # print(f"创建JWT令牌失败喵: {e}")
+        return None
+
+
+def RefreshToken(lmoadll_refresh_token, request=None):
+    """
+    刷新访问令牌, 使用Refresh Token获取新的Access Token
+    
+    Args:
+        refresh_token: 有效的Refresh Token
+        request: Flask请求对象，用于进行额外的安全验证
+    
+    Returns:
+        str: 新的Access Token, 如果刷新失败则返回None
+
+    解码refresh token以获取用户身份, 验证是否为refresh token类型, 获取用户身份, 创建新的access token
+    """
+    try:
+        decoded_token = decode_token(lmoadll_refresh_token)
+        
+        # 安全改进：增强验证逻辑
+        # 1. 验证token类型
+        if decoded_token.get('token_type') != 'refresh':
+            return None
+        
+        # 2. 验证用户身份存在
+        identity = decoded_token.get('sub')
+        if not identity:
+            return None
+        
+        # 3. 如果提供了请求对象，进行额外的安全检查
+        if request:
+            # 验证来源IP（可选，如果需要严格的会话绑定）
+            # 注意：在实际生产环境中，需要考虑代理和CDN的情况
+            current_ip = request.remote_addr
+            # 可以在token中添加更多的上下文信息进行验证
+            
+            # 验证用户代理
+            current_user_agent = request.headers.get('User-Agent', '')
+            # 可以在创建token时存储这些信息，然后在这里进行验证
+            
+            # 检查请求频率（可以集成到Redis等缓存中）
+            # 这里可以添加请求限流逻辑，防止暴力刷新攻击
+        
+        # 4. 验证token是否在黑名单中（预留接口，需要实现黑名单功能）
+        # 此处可以调用检查token是否被撤销的函数
+        
+        # 5. 创建新的access token
+        access_claims = {
+            'token_type': 'access',
+            'created_at': get_utc_now().isoformat()
+        }
+        
+        new_access_token = create_access_token(
+            identity=identity, 
+            additional_claims=access_claims
+        )
+        
+        return new_access_token
+    except Exception:
+        # print(f"刷新令牌失败喵: {e}")
+        return None
+
+
+def GetCurrentUserIdentity():
+    """
+    获取当前用户身份, 支持Cookie和Header两种方式
+
+    1. 首先尝试标准的JWT验证(从Authorization头获取)
+    2. 如果标准方式失败, 尝试从cookie中获取令牌
+    """
+    try:
         try:
             verify_jwt_in_request(optional=True)
             identity = get_jwt_identity()
@@ -164,14 +269,15 @@ def GetCurrentUserIdentity():
             # Header验证失败，继续尝试cookie方式
             pass
         
-        # 如果标准方式失败，尝试从cookie中获取令牌
-        access_token = request.cookies.get('access_token')
+        access_token = request.cookies.get('lmoadllUser')
         if access_token:
             try:
                 decoded_token = decode_token(access_token)
-                identity = decoded_token.get('sub')
-                if identity:
-                    return identity
+                # 验证是否为access token类型
+                if decoded_token.get('token_type') == 'access':
+                    identity = decoded_token.get('sub')
+                    if identity:
+                        return identity
                     
             except Exception:
                 # 解码cookie令牌失败，继续

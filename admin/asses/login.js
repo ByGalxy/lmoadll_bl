@@ -44,11 +44,13 @@ document.addEventListener('DOMContentLoaded', function () {
         setLoading(true);
 
         // 使用fetch API发送登录请求
+        // 注意：这里需要credentials: 'same-origin'以确保Cookie正常设置
         fetch('/api/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'same-origin',
             body: JSON.stringify({
                 username_email: usernameOrEmail,
                 password: password
@@ -73,8 +75,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 setLoading(false);
 
                 if (data.code === 200) {
-                    // 登录成功，刷新当前页面
-                    window.location.reload();
+                    // 存储用户信息到localStorage
+                    if (data.data && data.data.user_info) {
+                        try {
+                            localStorage.setItem('userInfo', JSON.stringify(data.data.user_info));
+                        } catch (e) {
+                            console.error('存储用户信息失败:', e);
+                        }
+                    }
+                    
+                    // 登录成功，跳转到仪表盘
+                    const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/admin';
+                    window.location.href = redirectUrl;
                 } else {
                     showError(data.message || '登录失败，请重试');
                 }
@@ -108,4 +120,58 @@ document.addEventListener('DOMContentLoaded', function () {
             buttonSpinner.style.display = 'none';
         }
     }
+    
+    // 初始化令牌刷新机制
+    initTokenRefresh();
 });
+
+// 初始化令牌刷新机制
+function initTokenRefresh() {
+    // 监听所有fetch请求
+    const originalFetch = window.fetch;
+    window.fetch = async function(resource, options = {}) {
+        // 确保有credentials选项
+        if (!options.credentials) {
+            options.credentials = 'same-origin';
+        }
+        
+        try {
+            // 发送原始请求
+            const response = await originalFetch(resource, options);
+            
+            // 如果是401错误，尝试刷新令牌
+              if (response.status === 401 && resource !== '/api/auth/refresh') {
+                  // 尝试刷新令牌 - 修复：不发送空的body，发送一个有效的JSON对象
+                  const refreshResponse = await originalFetch('/api/auth/refresh', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // 发送一个有效的空对象作为body
+                    body: JSON.stringify({})
+                });
+                
+                // 如果刷新成功，重试原始请求
+                if (refreshResponse.ok) {
+                    return await originalFetch(resource, options);
+                } else {
+                    // 刷新失败，跳转到登录页
+                    // 修复：避免重定向URL嵌套问题
+                    const currentPath = window.location.pathname + window.location.search;
+                    // 如果当前已经是登录页，则不添加redirect参数，避免嵌套
+                    const redirectUrl = currentPath.startsWith('/login') ? 
+                        '/login' : 
+                        '/login?redirect=' + encodeURIComponent(currentPath);
+                    window.location.href = redirectUrl;
+                    return response;
+                }
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('请求错误:', error);
+            throw error;
+        }
+    };
+}

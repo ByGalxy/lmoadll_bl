@@ -30,7 +30,23 @@ function fetchAdminInfo() {
     const adminIdentityElement = document.querySelector('#admin-identity');
 
     if (adminNameElement || adminIdentityElement) {
-        // 获取管理员名称
+        // 先尝试从localStorage获取
+        try {
+            const userInfo = localStorage.getItem('userInfo');
+            if (userInfo) {
+                const parsedUserInfo = JSON.parse(userInfo);
+                if (adminNameElement && parsedUserInfo.name) {
+                    adminNameElement.textContent = parsedUserInfo.name;
+                }
+                if (adminIdentityElement && parsedUserInfo.identity) {
+                    adminIdentityElement.textContent = parsedUserInfo.identity;
+                }
+            }
+        } catch (e) {
+            console.error('从localStorage获取用户信息失败:', e);
+        }
+
+        // 再从服务器获取以确保最新信息
         fetch('/api/admin/get_admin_name', {
             method: 'POST',
             credentials: 'same-origin'
@@ -96,33 +112,35 @@ document.addEventListener('DOMContentLoaded', function () {
             if (confirm('确定要退出登录吗？')) {
                 // 发送退出登录请求到服务器
                 fetch('/api/auth/logout', {
-                    method: 'GET',
-                    credentials: 'same-origin'
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 })
                     .then(response => response.json())
                     .then(data => {
-                        if (data.code === 200) {
-                            // 删除localStorage中的用户信息
-                            try {
-                                localStorage.removeItem('userInfo');
-                                localStorage.removeItem('token');
-                            } catch (e) {
-                                console.error('清除localStorage失败:', e);
-                            }
-
-                            console.log('用户退出登录成功');
-                            window.location.reload();
-                        } else {
-                            console.error('退出登录失败:', data.message);
-                            alert('退出登录失败，请重试');
-                            // 失败时也刷新页面，确保用户状态一致性
-                            window.location.reload();
+                        // 无论成功与否，都清除本地存储并跳转
+                        // 删除localStorage中的用户信息
+                        try {
+                            localStorage.removeItem('userInfo');
+                        } catch (e) {
+                            console.error('清除localStorage失败:', e);
                         }
+
+                        // 直接跳转到登录页，确保安全退出
+                        window.location.href = '/login';
                     })
                     .catch(error => {
                         console.error('退出登录请求失败:', error);
-                        // 即使请求失败，也刷新页面，确保用户状态安全
-                        window.location.reload();
+                        // 即使请求失败，也清除本地存储并跳转
+                        try {
+                            localStorage.removeItem('userInfo');
+                            localStorage.removeItem('token');
+                        } catch (e) {
+                            console.error('清除localStorage失败:', e);
+                        }
+                        window.location.href = '/login';
                     });
             }
         });
@@ -263,4 +281,58 @@ document.addEventListener('DOMContentLoaded', function () {
     if (document.querySelector('#admin-name') || document.querySelector('#admin-identity')) {
         fetchAdminInfo();
     }
+    
+    // 初始化令牌刷新机制
+    initTokenRefresh();
 });
+
+// 初始化令牌刷新机制
+function initTokenRefresh() {
+    // 监听所有fetch请求
+    const originalFetch = window.fetch;
+    window.fetch = async function(resource, options = {}) {
+        // 确保有credentials选项
+        if (!options.credentials) {
+            options.credentials = 'same-origin';
+        }
+        
+        try {
+            // 发送原始请求
+            const response = await originalFetch(resource, options);
+            
+            // 如果是401错误，尝试刷新令牌
+              if (response.status === 401 && resource !== '/api/auth/refresh') {
+                  // 尝试刷新令牌 - 修复：不发送空的body，或者发送一个有效的JSON对象
+                  const refreshResponse = await originalFetch('/api/auth/refresh', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // 发送一个有效的空对象作为body
+                    body: JSON.stringify({})
+                });
+                
+                // 如果刷新成功，重试原始请求
+                if (refreshResponse.ok) {
+                    return await originalFetch(resource, options);
+                } else {
+                    // 刷新失败，跳转到登录页
+                    // 修复：避免重定向URL嵌套问题
+                    const currentPath = window.location.pathname + window.location.search;
+                    // 如果当前已经是登录页，则不添加redirect参数，避免嵌套
+                    const redirectUrl = currentPath.startsWith('/login') ? 
+                        '/login' : 
+                        '/login?redirect=' + encodeURIComponent(currentPath);
+                    window.location.href = redirectUrl;
+                    return response;
+                }
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('请求错误:', error);
+            throw error;
+        }
+    };
+}

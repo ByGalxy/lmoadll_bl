@@ -11,7 +11,6 @@ from flask import Blueprint, send_file, request, redirect
 from magic.utils.token import GetCurrentUserIdentity
 
 
-
 login_bp = Blueprint('login', __name__, url_prefix='/login')
 
 
@@ -20,6 +19,8 @@ def login_page():
     """
     如果已经登录, 则重定向;
     否则返回登录页面, 让用户登录
+    
+    注意: GetCurrentUserIdentity 现在支持双Token系统, 会验证access token
     """
     user_identity = GetCurrentUserIdentity()
     if user_identity is None:
