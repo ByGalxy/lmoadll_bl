@@ -11,7 +11,8 @@ JWT Token 管理模块
 """
 
 import secrets
-from flask import request
+import jwt as pyjwt
+from flask import Flask, request
 from typing import Dict
 from datetime import datetime, timezone, timedelta
 from flask_jwt_extended import (
@@ -55,7 +56,7 @@ class JWTKeyManager:
     def _clean_old_keys(self):
         """清理过期密钥"""
         current_time = get_utc_now()
-        expired_keys = []
+        expired_keys: list[str] = []
         
         for key, created_time in self.key_dict.items():
             key_age = current_time - created_time
@@ -75,7 +76,7 @@ class JWTKeyManager:
         latest_key = max(self.key_dict.items(), key=lambda x: x[1])[0]
         return latest_key
     
-    def get_all_valid_keys(self) -> list:
+    def get_all_valid_keys(self) -> list[str]:
         """获取所有有效密钥"""
         self._clean_old_keys()
         return list(self.key_dict.keys())
@@ -84,7 +85,7 @@ class JWTKeyManager:
 jwt_key_manager = JWTKeyManager(rotation_days=7, max_keys=8)
 
 
-def InitJwtManager(app):
+def InitJwtManager(app: Flask) -> JWTManager:
     """初始化JWT管理器, 初始化JWT管理器并配置JWT相关设置"""
 
     if not app.config.get('JWT_SECRET_KEY'):
@@ -119,8 +120,6 @@ def InitJwtManager(app):
         if token:
             for key in valid_keys:
                 try:
-                    # 使用PyJWT手动验证
-                    import jwt as pyjwt
                     pyjwt.decode(token, key, algorithms=["HS256"], options={"verify_exp": False})
                     return key
                 except pyjwt.InvalidTokenError:
@@ -220,6 +219,7 @@ def RefreshToken(lmoadll_refresh_token, request=None):
         
         # 3. 如果提供了请求对象，进行额外的安全检查
         if request:
+            # TODO 需要额外的安全检查，例如验证来源IP等
             # 验证来源IP（可选，如果需要严格的会话绑定）
             # 注意：在实际生产环境中，需要考虑代理和CDN的情况
             current_ip = request.remote_addr

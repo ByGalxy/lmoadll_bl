@@ -52,7 +52,7 @@ def check_database_configuration() -> None:
         and DoesitexistConfigToml("db", "sql_prefix") != ""
         and os.path.exists(DoesitexistConfigToml("db", "sql_sqlite_path"))
     ):
-        # 还没开始写......
+        # TODO : 检查数据库是否存在
         pass
 
 

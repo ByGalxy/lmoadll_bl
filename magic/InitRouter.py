@@ -6,9 +6,10 @@
 
 
 import os
+from flask import Flask
 
 
-def initrouter(app):
+def initrouter(app: Flask) -> None:
     if os.path.exists("admin/install.py"):
         from admin.install import install_bp
         app.register_blueprint(install_bp)
