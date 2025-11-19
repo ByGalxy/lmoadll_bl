@@ -14,6 +14,7 @@ import os
 load_dotenv()
 app = Flask(__name__)
 app.config["DEBUG"] = os.getenv("debug", "False").lower() in ("true", "1", "t")
+app.json.sort_keys = False # type: ignore
 Init_module(app)
 
 

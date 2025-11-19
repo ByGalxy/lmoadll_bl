@@ -4,7 +4,7 @@
 #@copyright  Copyright (c) 2025 lmoadll_bl team
 #@license  GNU General Public License 3.0
 
-
+import logging
 from flask import Blueprint, Response, request
 from admin import admin_required
 from magic.utils.token import GetCurrentUserIdentity
@@ -46,7 +46,7 @@ def admin_get_admin_name() -> Response:
                 return Response(user_name[0], mimetype='text/plain')
         return Response("Unknown", mimetype='text/plain')
     except Exception as e:
-        print(f"获取用户信息时出错: {e}")
+        logging.error(f"获取用户信息时出错: {e}")
         return Response("Unknown", mimetype='text/plain')
 
 
@@ -67,7 +67,7 @@ def admin_get_admin_identity() -> Response:
                 return Response('管理员', mimetype='text/plain')
         return Response('Unknown', mimetype='text/plain')
     except Exception as e:
-        print(f"获取用户身份时出错: {e}")
+        logging.error(f"获取用户身份时出错: {e}")
         return Response('Unknown', mimetype='text/plain')
 
 
@@ -83,7 +83,7 @@ def admin_get_name_options() -> Response:
         else:
             return Response('', mimetype='text/plain')
     except Exception as e:
-        print(f'获取全局设置失败喵: {e}')
+        logging.error(f'获取全局设置失败喵: {e}')
         return Response('Unknown', mimetype='text/plain')
 
 
@@ -108,15 +108,9 @@ def admin_search_users() -> Response:
         else:
             return Response('{"users": []}', mimetype='application/json')
     except Exception as e:
-        print(f"搜索用户API出错: {e}")
+        logging.error(f"搜索用户API出错: {e}")
         return Response('{"users": []}', mimetype='application/json')
 
-
-@admin_bp.route("/user/me", methods=['GET'])
-@admin_required
-def admin_me_user() -> Response:
-    """获取用户当前的信息"""
-    pass
 
 @admin_bp.route('/set_name_options', methods=['POST'])
 @admin_required
@@ -149,5 +143,5 @@ def admin_set_name_options() -> Response:
             print(f'网站设置保存失败喵: {result_name[1]}, {result_description[1]}, {result_keywords[1]}, {result_registration[1]}')
             return Response(f"网站设置保存失败: {result_name[1]}, {result_description[1]}, {result_keywords[1]}, {result_registration[1]}", mimetype='text/plain')
     except Exception as e:
-        print(f'保存全局设置失败喵: {e}')
+        logging.error(f'保存全局设置失败喵: {e}')
         return Response(f'保存全局设置失败: {e}', mimetype='text/plain')

@@ -7,12 +7,34 @@
 
 import os
 import tomllib
-import tomli_w
+import pathlib
+from tomli_w import dump
 
 
-__all__ = ["DoesitexistConfigToml", "WriteConfigToml"]
+CONFIG_PATH = pathlib.Path(__file__).parent.parent.parent / "config.toml" # 配置文件路径
+
+
+__all__ = [
+    "check_config_file",
+    "DoesitexistConfigToml",
+    "WriteConfigToml"
+]
 
 config_path = "config.toml"
+
+
+
+def check_config_file():
+    """检查config.toml是否存在, 如果不存在则创建默认配置"""
+    if not CONFIG_PATH.exists():
+        default_config = {
+            "server": {
+                "install": False
+            }
+        }
+        CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(CONFIG_PATH, "wb") as f:
+            dump(default_config, f)
 
 
 def DoesitexistConfigToml(a, b):
@@ -35,7 +57,7 @@ def WriteConfigToml(a, b, c):
     if not os.path.exists(config_path):
         config = {a: {b: c}}
         with open(config_path, "wb") as f:
-            tomli_w.dump(config, f)
+            dump(config, f)
         return
 
     # 读取现有配置文件
@@ -51,4 +73,4 @@ def WriteConfigToml(a, b, c):
 
     # 写回配置文件
     with open(config_path, "wb") as f:
-        tomli_w.dump(config, f)
+        dump(config, f)

@@ -11,6 +11,7 @@ JWT Token 管理模块
 """
 
 import secrets
+import logging
 import jwt as pyjwt
 from flask import Flask, request
 from typing import Dict
@@ -173,8 +174,8 @@ def CreateTokens(identity, additional_claims=None):
             'lmoadllUser': access_token,
             'lmoadll_refresh_token': refresh_token
         }
-    except Exception:
-        # print(f"创建JWT令牌失败喵: {e}")
+    except Exception as e:
+        logging.error(f"创建JWT令牌失败喵: {e}")
         return None
 
 
@@ -186,8 +187,8 @@ def CreateJwtToken(identity, additional_claims=None):
         if tokens:
             return tokens['lmoadllUser']
         return None
-    except Exception:
-        # print(f"创建JWT令牌失败喵: {e}")
+    except Exception as e:
+        logging.error(f"创建JWT令牌失败喵: {e}")
         return None
 
 
@@ -247,14 +248,14 @@ def RefreshToken(lmoadll_refresh_token, request=None):
         )
         
         return new_access_token
-    except Exception:
-        # print(f"刷新令牌失败喵: {e}")
+    except Exception as e:
+        logging.error(f"刷新令牌失败喵: {e}")
         return None
 
 
 def GetCurrentUserIdentity():
     """
-    获取当前用户身份, 支持Cookie和Header两种方式
+    获取当前用户UID, 支持Cookie和Header两种方式
 
     1. 首先尝试标准的JWT验证(从Authorization头获取)
     2. 如果标准方式失败, 尝试从cookie中获取令牌
@@ -265,7 +266,8 @@ def GetCurrentUserIdentity():
             identity = get_jwt_identity()
             if identity is not None:
                 return identity
-        except Exception:
+        except Exception as e:
+            logging.error(f"Header验证失败喵: {e}")
             # Header验证失败，继续尝试cookie方式
             pass
         
@@ -279,13 +281,14 @@ def GetCurrentUserIdentity():
                     if identity:
                         return identity
                     
-            except Exception:
+            except Exception as e:
+                logging.error(f"Cookie解码失败喵: {e}")
                 # 解码cookie令牌失败，继续
                 pass
         
         # 所有方式都失败，返回None
         return None
         
-    except Exception:
-        # print(f"获取用户身份失败喵: {e}")
+    except Exception as e:
+        logging.error(f"获取用户身份失败喵: {e}")
         return None

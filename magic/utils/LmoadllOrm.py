@@ -10,6 +10,7 @@
 import os
 import threading
 import time
+import logging
 from queue import Queue, Empty
 from magic.utils.TomlConfig import DoesitexistConfigToml, WriteConfigToml
 
@@ -151,7 +152,7 @@ class ConnectionPool:
 
             return adapter
         except Exception as e:
-            print(f"创建数据库连接失败: {e}")
+            logging.error(f"创建数据库连接失败: {e}")
             return None
 
     def _is_connection_valid(self, adapter):
@@ -874,7 +875,7 @@ def CreateSiteOption(option_name, option_value, user_id=0):
         db.commit()
         return [True, "网站选项创建成功"]
     except Exception as e:
-        print(f"创建网站设置失败: {e}")
+        logging.error(f"创建网站设置失败: {e}")
         return [False, str(e)]
     finally:
         if db:
@@ -1149,7 +1150,7 @@ def GetSiteOptionByName(option_name):
         else:
             return [False, "未找到指定的设置"]
     except Exception as e:
-        print(f"查询网站设置失败: {e}")
+        logging.error(f"查询网站设置失败: {e}")
         return [False, str(e)]
     finally:
         if db:
@@ -1190,7 +1191,7 @@ def GetUserByEmail(db_prefix, sql_sqlite_path, username_email):
             }
         return None
     except Exception as e:
-        print(f"查询用户信息失败: {e}")
+        logging.error(f"查询用户信息失败: {e}")
         return None
     finally:
         # 归还连接池
@@ -1209,7 +1210,7 @@ def GetUserRoleByIdentity(user_identity):
         user_group = db.fetchone()
         return user_group  # 期望返回,如: ('superadministrator',)
     except Exception as e:
-        print(f"查询用户角色失败: {e}")
+        logging.error(f"查询用户角色失败: {e}")
         return [False, str(e)]
     finally:
         if db:
@@ -1228,7 +1229,7 @@ def GetUserNameByIdentity(user_identity):
         user_name = db.fetchone()
         return user_name  # 期望返回,如: ('admin',)
     except Exception as e:
-        print(f"查询用户名失败: {e}")
+        logging.error(f"查询用户名失败: {e}")
         return [False, str(e)]
     finally:
         if db:
@@ -1247,7 +1248,7 @@ def GetUserCount():
         user_count = db.fetchone()[0]
         return user_count
     except Exception as e:
-        print(f"查询用户数量失败: {e}")
+        logging.error(f"查询用户数量失败: {e}")
         return [False, str(e)]
     finally:
         if db:
@@ -1295,7 +1296,7 @@ def SearchUsers(keyword):
             })
         return user_list
     except Exception as e:
-        print(f"搜索用户失败: {e}")
+        logging.error(f"搜索用户失败: {e}")
         return [False, str(e)]
     finally:
         if db:

@@ -13,6 +13,7 @@ from functools import wraps
 from flask import Blueprint, send_file, Response, redirect, url_for, request
 from magic.utils.token import GetCurrentUserIdentity
 from magic.utils.LmoadllOrm import GetUserRoleByIdentity
+import logging
 
 
 
@@ -57,7 +58,7 @@ def admin_required(f):
                 return redirect('/')
                 
         except Exception as e:
-            print(f"获取用户信息时出错喵: {e}")
+            logging.error(f"获取用户信息时出错喵: {e}")
             return redirect('/')
     
     return decorated_function

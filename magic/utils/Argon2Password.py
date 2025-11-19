@@ -12,6 +12,7 @@
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
+import logging
 
 
 
@@ -41,7 +42,7 @@ def HashPassword(password):
         pw_hash = ph.hash(password)
         return pw_hash
     except Exception as e:
-        print(f"哈希处理失败: {e}")
+        logging.error(f"哈希处理失败: {e}")
         return None
 
 
@@ -56,5 +57,5 @@ def VerifyPassword(pw_hash, password):
     except VerifyMismatchError:
         return False
     except Exception as e:
-        print(f"验证过程中出现错误喵: {e}")
+        logging.error(f"验证过程中出现错误喵: {e}")
         return False

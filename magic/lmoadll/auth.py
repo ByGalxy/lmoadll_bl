@@ -11,8 +11,8 @@
 
 import random
 import re
-import traceback
 import time
+import logging
 from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_mail import Message
 from functools import wraps
@@ -126,6 +126,7 @@ def login_api():
             if not db_prefix or not sql_sqlite_path:
                 return jsonify({"code": 500, "message": "数据库配置缺失喵喵"}), 500
         except Exception as e:
+            logging.error(f"读取数据库配置失败: {str(e)}")
             return jsonify({"code": 500, "message": f"读取配置失败喵喵: {str(e)}"}), 500
         
         user = GetUserByEmail(db_prefix, sql_sqlite_path, username_email)
@@ -186,8 +187,162 @@ def login_api():
         return response, 200
         
     except Exception as e:
-        # print(f"登录过程中出现错误喵: {e}")
+        logging.error(f"登录过程中出现错误喵: {e}")
         return jsonify({"code": 500, "message": f"登录失败: {str(e)}"}), 500
+
+
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh_api():
+    """
+    POST /api/auth/refresh
+      
+     使用lmoadll_refresh_token刷新access token
+     
+     请求格式: 仅接受从cookie中获取lmoadll_refresh_token
+    
+    响应格式：
+    * 成功: `{"code": 200, "message": "令牌刷新成功", "expires_in": 900}`
+    * 失败: `{"code": 错误码, "message": "错误信息"}`
+    """
+    try:
+        # 安全改进：仅从cookie中获取refresh token，移除从请求体获取的路径
+        refresh_token = request.cookies.get('lmoadll_refresh_token')
+        
+        if not refresh_token:
+            return jsonify({"code": 400, "message": "缺少lmoadll_refresh token喵喵"}), 400
+        
+        # 刷新access token，传入请求上下文以进行额外验证
+        new_access_token = RefreshToken(refresh_token, request)
+        if not new_access_token:
+            return jsonify({"code": 401, "message": "无效的refresh token喵喵"}), 401
+        
+        # 从配置中获取access token过期时间(分钟)
+        access_expires_in = 15  # 默认15分钟
+        
+        # 安全改进：不在JSON响应中返回token
+        response = jsonify({
+            "code": 200,
+            "message": "令牌刷新成功喵",
+            "expires_in": access_expires_in * 60  # 转换为秒
+        })
+        
+        response.set_cookie(
+            'lmoadllUser', 
+            new_access_token,
+            httponly=True,           # 防止XSS攻击
+            secure=True,             # 仅HTTPS传输
+            samesite='Strict',       # 严格限制跨站请求
+            max_age=15*60            # 15分钟过期时间
+        )
+        
+        return response, 200
+    except Exception as e:
+        logging.error(f"刷新令牌过程中出现错误喵: {e}")
+        return jsonify({"code": 500, "message": "刷新失败喵"}), 500
+
+
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    """
+    POST /api/auth/logout
+    
+    处理登出请求
+    - 清除cookie中的access_token和refresh_token
+    - 客户端也应该删除本地存储的令牌
+
+    响应格式：
+    * 成功: `{"code": 200, "message": "登出成功喵"}`
+    * 失败: `{"code": 500, "message": "错误信息"}`
+    """
+    try:
+        response = jsonify({"code": 200, "message": "登出成功喵"})
+        
+        response.delete_cookie('lmoadllUser')
+        response.delete_cookie('lmoadll_refresh_token')
+        
+        return response, 200
+    except Exception as e:
+        logging.error(f"登出过程中出现错误喵: {e}")
+        return jsonify({"code": 500, "message": "登出失败喵"}), 500
+
+
+@auth_bp.route('user', methods=['GET'])
+def user_api():
+    """获取用户的数据信息
+    GET /api/auth/user
+
+    响应格式:
+
+    成功:
+    ```
+    {
+    "code": 200,
+    "data":{
+        "uid": "1",
+        "name": "神秘的绿",
+        "email": "xxxxx@xxx.xxx"
+        }
+    }
+    ```
+
+    错误:
+    ```
+    {
+        "code": 401,
+        "message": "用户未登录喵喵"
+    }
+    ```
+    """
+    try:
+        user_identity = GetCurrentUserIdentity()
+
+        if user_identity is None:
+            return jsonify({"code": 401, "message": "用户未登录喵喵"}), 401
+        
+        db_prefix = DoesitexistConfigToml('db', 'sql_prefix')
+        sql_sqlite_path = DoesitexistConfigToml('db', 'sql_sqlite_path')
+        
+        if not db_prefix or not sql_sqlite_path:
+            return jsonify({"code": 500, "message": "数据库配置缺失喵喵"}), 500
+        
+        # 获取数据库连接
+        success, message, db, cursor, table_name = GetDbConnection("users")
+        if not success:
+            return jsonify({"code": 500, "message": f"数据库连接失败喵喵: {message}"}), 500
+        
+        try:
+            # 查询用户详细信息
+            cursor.execute(f"SELECT uid, name, mail, createdAt FROM {table_name} WHERE uid = ?", (user_identity,))
+            user = cursor.fetchone()
+            
+            if not user:
+                return jsonify({"code": 404, "message": "用户不存在喵喵"}), 404
+            
+            # 构建用户信息响应
+            user_info = {
+                "uid": user[0],
+                "name": user[1],
+                "email": user[2],
+                "RegisterTime": user[3]
+            }
+
+            return jsonify({
+                "code": 200,
+                "data": user_info
+            }), 200
+            
+        except Exception as e:
+            logging.error(f"查询用户信息时出错喵: {e}")
+            return jsonify({"code": 500, "message": "查询用户信息失败喵喵"}), 500
+            
+        finally:
+            # 释放数据库连接
+            if db:
+                db_orm.return_db(db, "default")
+                
+    except Exception as e:
+        logging.error(f"获取用户信息过程中出现错误喵: {e}")
+        return jsonify({"code": 500, "message": "服务器内部错误喵喵"}), 500
 
 
 @auth_bp.route('/register', methods=['POST'])
@@ -254,8 +409,8 @@ def register_api():
             if not db_prefix or not sql_sqlite_path:
                 print("数据库配置缺失: db_prefix或sql_sqlite_path为空")
                 return jsonify({"code": 500, "message": "数据库配置缺失喵喵"}), 500
-        except Exception:
-            # print(f"读取配置文件时出错: {str(e)}")
+        except Exception as e:
+            logging.error(f"读取配置文件时出错: {str(e)}")
             return jsonify({"code": 500, "message": "读取配置失败喵喵"}), 500
         
         try:
@@ -265,8 +420,8 @@ def register_api():
                     "code": 400,
                     "message": "该邮箱已被注册喵喵"
                 }), 400
-        except Exception:
-            # print(f"检查邮箱是否已存在时出错喵喵: {str(e)}")
+        except Exception as e:
+            logging.error(f"检查邮箱是否已存在时出错喵喵: {str(e)}")
             return jsonify({"code": 500, "message": "数据库查询失败喵喵"}), 500
         
         if email not in verification_codes:
@@ -346,7 +501,7 @@ def register_api():
                 # 回滚事务
                 if db:
                     db.rollback()
-                print(f"创建用户时出错: {str(e)}")
+                logging.error(f"创建用户时出错: {str(e)}")
                 return jsonify({"code": 500, "message": f"创建用户失败喵喵: {str(e)}"}), 500
             
             finally:
@@ -355,13 +510,11 @@ def register_api():
                     db_orm.return_db(db, "default")
         
         except Exception as e:
-            print(f"数据库操作时出错: {str(e)}")
+            logging.error(f"数据库操作时出错: {str(e)}")
             return jsonify({"code": 500, "message": "数据库操作失败喵喵"}), 500
     
     except Exception as e:
-        # 记录未预期的异常
-        print(f"注册过程中出现未预期错误喵: {str(e)}")
-        traceback.print_exc()
+        logging.error(f"注册过程中出现未预期错误喵: {str(e)}")
         return jsonify({"code": 500, "message": "注册失败，请稍后重试喵喵"}), 500
 
 
@@ -413,7 +566,7 @@ def send_email_code_register_api():
                 print("数据库配置缺失: db_prefix或sql_sqlite_path为空")
                 return jsonify({"code": 500, "message": "数据库配置缺失喵喵"}), 500
         except Exception as e:
-            print(f"读取配置文件时出错: {str(e)}")
+            logging.error(f"读取配置文件时出错: {str(e)}")
             return jsonify({"code": 500, "message": "读取配置失败喵喵"}), 500
         
         try:
@@ -428,7 +581,7 @@ def send_email_code_register_api():
                     }
                 }), 400
         except Exception as e:
-            print(f"检查邮箱是否已存在时出错喵喵: {str(e)}")
+            logging.error(f"检查邮箱是否已存在时出错喵喵: {str(e)}")
             return jsonify({"code": 500, "message": "数据库查询失败喵喵"}), 500
         
         # 生成6位数字验证码
@@ -436,7 +589,7 @@ def send_email_code_register_api():
             random.seed()
             verification_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
         except Exception as e:
-            print(f"生成验证码时出错: {str(e)}")
+            logging.error(f"生成验证码时出错: {str(e)}")
             return jsonify({"code": 500, "message": "验证码生成失败喵喵"}), 500
         
         code_salt = HashPassword(verification_code)
@@ -454,7 +607,7 @@ def send_email_code_register_api():
             "expires_at": expires_at,
             "created_at": int(time.time())
         }
-        
+        print(f"验证码 {verification_code} 已成功生成并存储到内存中, 过期时间为 {expires_at}")
         # 实现邮件发送功能
         try:
             msg = Message(
@@ -470,7 +623,7 @@ def send_email_code_register_api():
             mail.send(msg)
             # print(f"验证码 {verification_code} 已成功发送到邮箱 {email}")
         except Exception as e:
-            print(f"发送邮件失败喵: {str(e)}")
+            logging.error(f"发送邮件失败喵: {str(e)}")
             # 从内存中删除已生成的验证码
             if email in verification_codes:
                 del verification_codes[email]
@@ -481,82 +634,5 @@ def send_email_code_register_api():
         return jsonify({"code": 200, "codeSalt": code_salt}), 200
         
     except Exception as e:
-        # 记录未预期的异常
-        print(f"发送验证码过程中出现未预期错误喵: {str(e)}")
-        traceback.print_exc()
+        logging.error(f"发送验证码过程中出现未预期错误喵: {str(e)}")
         return jsonify({"code": 500, "message": "发送验证码失败，请稍后重试喵喵"}), 500
-
-
-@auth_bp.route('/refresh', methods=['POST'])
-def refresh_api():
-    """
-    POST /api/auth/refresh
-      
-     使用lmoadll_refresh_token刷新access token
-     
-     请求格式: 仅接受从cookie中获取lmoadll_refresh_token
-    
-    响应格式：
-    * 成功: `{"code": 200, "message": "令牌刷新成功", "expires_in": 900}`
-    * 失败: `{"code": 错误码, "message": "错误信息"}`
-    """
-    try:
-        # 安全改进：仅从cookie中获取refresh token，移除从请求体获取的路径
-        refresh_token = request.cookies.get('lmoadll_refresh_token')
-        
-        if not refresh_token:
-            return jsonify({"code": 400, "message": "缺少lmoadll_refresh token喵喵"}), 400
-        
-        # 刷新access token，传入请求上下文以进行额外验证
-        new_access_token = RefreshToken(refresh_token, request)
-        if not new_access_token:
-            return jsonify({"code": 401, "message": "无效的refresh token喵喵"}), 401
-        
-        # 从配置中获取access token过期时间（分钟）
-        access_expires_in = 15  # 默认15分钟
-        
-        # 安全改进：不在JSON响应中返回token
-        response = jsonify({
-            "code": 200,
-            "message": "令牌刷新成功喵",
-            "expires_in": access_expires_in * 60  # 转换为秒
-        })
-        
-        response.set_cookie(
-            'lmoadllUser', 
-            new_access_token,
-            httponly=True,           # 防止XSS攻击
-            secure=True,             # 仅HTTPS传输
-            samesite='Strict',       # 严格限制跨站请求
-            max_age=15*60            # 15分钟过期时间
-        )
-        
-        return response, 200
-    except Exception as e:
-        print(f"刷新令牌过程中出现错误喵: {e}")
-        return jsonify({"code": 500, "message": "刷新失败喵"}), 500
-
-
-@auth_bp.route('/logout', methods=['POST'])
-def logout():
-    """
-    POST /api/auth/logout
-    
-    处理登出请求
-    - 清除cookie中的access_token和refresh_token
-    - 客户端也应该删除本地存储的令牌
-
-    响应格式：
-    * 成功: `{"code": 200, "message": "登出成功喵"}`
-    * 失败: `{"code": 500, "message": "错误信息"}`
-    """
-    try:
-        response = jsonify({"code": 200, "message": "登出成功喵"})
-        
-        response.delete_cookie('lmoadllUser')
-        response.delete_cookie('lmoadll_refresh_token')
-        
-        return response, 200
-    except Exception as e:
-        print(f"登出过程中出现错误喵: {e}")
-        return jsonify({"code": 500, "message": "登出失败喵"}), 500
