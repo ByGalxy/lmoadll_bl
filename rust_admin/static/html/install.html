@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lmoadll_bl - 安装程序</title>
+    <link rel="stylesheet" href="/asses/install/install.css">
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="card" id="step-1">
+            <h2>lmoadll_bl</h2>
+            <div class="section-title">许可协议</div>
+            <p class="license-text">
+                lmoadll_bl 基于 GPL 协议发布，我们允许用户在 GPL 协议的范围内使用、拷贝、修改和分发程序。在 GPL 许可的范围内，您可以自由地将其用于商业以及非商业用途。
+            </p>
+            <p class="license-text">
+                lmoadll_bl 软件由社区提供支持, 核心开发团队负责维护并每日开发工作以及新特性的制定。如果您遇到使用上的问题, 程序中的BUG, 
+                以及期待的新功能，欢迎您在社区中交流或者直接向我们反馈代码。对于贡献出色的，您的名字将出现在贡献者名单中。
+            </p>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="agree-terms" autocomplete="off">
+                <label for="agree-terms">我已阅读并同意上述许可协议</label>
+            </div>
+
+            <div class="btn-container">
+                <a href="#step-2" class="primary-btn disabled" id="next-btn">开始安装</a>
+            </div>
+        </div>
+
+        <div class="card" id="step-2" style="display: none;">
+            <h2>数据库配置</h2>
+            <p>请输入您的数据库连接信息：</p>
+            <form id="db-config-form">
+                <div class="mb-3 text-start">
+                    <label for="db-type" class="form-label">数据库类型</label>
+                    <select class="form-select" id="db-type" name="db_type" required>
+                        <option value="">请选择数据库类型</option>
+                        <option value="sqlite">SQLite</option>
+                        <option value="mysql">MySQL</option>
+                    </select>
+                </div>
+
+                <!-- MySQL配置项 -->
+                <div id="mysql-config" style="display: none;">
+                    <div class="mb-3 text-start">
+                        <label for="db-host" class="form-label">主机地址</label>
+                        <input type="text" class="form-control" id="db-host" name="db_host" placeholder="localhost">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="db-port" class="form-label">端口</label>
+                        <input type="number" class="form-control" id="db-port" name="db_port" placeholder="3306">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="db-name" class="form-label">数据库名称</label>
+                        <input type="text" class="form-control" id="db-name" name="db_name" placeholder="lmoadll_bl">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="db-user" class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="db-user" name="db_user" placeholder="root">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="db-password" class="form-label">密码</label>
+                        <input type="password" class="form-control" id="db-password" name="db_password"
+                            placeholder="密码">
+                    </div>
+                </div>
+
+                <!-- SQLite配置项 -->
+                <div id="sqlite-config" style="display: none;">
+                    <div class="mb-3 text-start">
+                        <label for="db-prefix" class="form-label">数据库前缀</label>
+                        <input type="text" class="form-control" id="db-prefix" name="db_prefix" placeholder="lmoadll_"
+                            value="lmoadll_">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="sql_sqlite_path" class="form-label">数据库文件路径</label>
+                        <input type="text" class="form-control" id="sql_sqlite_path" name="sql_sqlite_path"
+                            placeholder="例如: /var/www/database/">
+                        <div id="sqlite-path-note" class="form-text" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <button type="submit" class="primary-btn" id="verificat_db_conn" style="margin-left: 10px;">
+                        继续
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card" id="step-3" style="display: none;">
+            <h2>创建超级管理员账号</h2>
+            <div class="mb-3 text-start">
+                <label for="site-name" class="form-label">网站名称</label>
+                <input type="text" class="form-control" id="site-name" placeholder="请输入网站名称">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="site-url" class="form-label">网站 URL</label>
+                <input type="text" class="form-control" id="site-url" placeholder="https://example.com">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="admin-email" class="form-label">邮箱地址</label>
+                <input type="email" class="form-control" id="admin-email" placeholder="admin@example.com">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="admin-username" class="form-label">用户名</label>
+                <input type="text" class="form-control" id="admin-username" placeholder="请输入用户名">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="admin-password" class="form-label">密码</label>
+                <input type="password" class="form-control" id="admin-password" placeholder="请输入密码">
+            </div>
+            <div class="btn-container">
+                <a href="#step-4" class="primary-btn" id="to-step-4">开始安装</a>
+            </div>
+        </div>
+
+        <div class="card" id="step-4" style="display: none;">
+            <h2>安装完成！</h2>
+            <p>恭喜您成功安装了 lmoadll_bl 平台。现在您可以开始使用了。</p>
+            <div class="mb-3 text-start">
+                <h3>管理员账户</h3>
+                <p>用户名: admin</p>
+                <p>密码: 123456 (建议立即修改)</p>
+            </div>
+            <div class="mb-3 text-start">
+                <h3>登录信息</h3>
+                <p>访问 <a href="/admin" class="text-primary">/admin</a> 登录管理后台</p>
+                <p>访问 <a href="/" class="text-primary">/</a> 查看前台网站</p>
+            </div>
+            <div class="btn-container">
+                <a href="/admin" class="primary-btn">前往管理后台</a>
+            </div>
+        </div>
+    </div>
+    <script src="/asses/install/install.js"></script>
+</body>
+
+</html>

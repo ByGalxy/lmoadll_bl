@@ -28,8 +28,7 @@ def load_matl_config():
         if "smtp" in config and "MAIL_SENDER_NAME" in config["smtp"]:
             MAIL_SENDER_NAME = config["smtp"]["MAIL_SENDER_NAME"]
         
-        # 构建SMTP配置
-        SMTP_CONFIG = {
+        default_config = {
             'MAIL_SERVER': '',           # 默认SMTP服务器
             'MAIL_PORT': 465,            # 默认端口
             'MAIL_USERNAME': '',         # 默认用户名为空
@@ -38,18 +37,39 @@ def load_matl_config():
             'MAIL_USE_TLS': False        # 默认不使用TLS
         }
         
+        # 如果SMTP_CONFIG是空字典, 初始化它, 否则, 确保所有默认键都存在
+        if not SMTP_CONFIG:
+            SMTP_CONFIG.update(default_config)
+        else:
+            for key, default_value in default_config.items():
+                if key not in SMTP_CONFIG:
+                    SMTP_CONFIG[key] = default_value
+        
+        # 获取用户名用于构建默认发送者
         if "smtp" in config and "SMTP_CONFIG" in config["smtp"]:
             smtp_config = config["smtp"]["SMTP_CONFIG"]
             
             # 更新每个配置项，但保留默认值
-            for key, default_value in SMTP_CONFIG.items():
-                if key in smtp_config:
-                    SMTP_CONFIG[key] = smtp_config[key]
+            for key, value in smtp_config.items():
+                if key in SMTP_CONFIG:
+                    SMTP_CONFIG[key] = value
             
             # 获取用户名用于构建默认发送者
             default_username = smtp_config.get('MAIL_USERNAME', '')
-            
-            SMTP_CONFIG['MAIL_DEFAULT_SENDER'] = (MAIL_SENDER_NAME, default_username)
+        else:
+            # 如果没有配置SMTP_CONFIG，使用默认用户名
+            default_username = SMTP_CONFIG.get('MAIL_USERNAME', '')
+        SMTP_CONFIG['MAIL_DEFAULT_SENDER'] = (MAIL_SENDER_NAME, default_username)
         
     except Exception as e:
         logging.error(f"加载配置文件失败: {e}")
+        if not SMTP_CONFIG:
+            SMTP_CONFIG.update({
+                'MAIL_SERVER': '',
+                'MAIL_PORT': 465,
+                'MAIL_USERNAME': '',
+                'MAIL_PASSWORD': '',
+                'MAIL_USE_SSL': True,
+                'MAIL_USE_TLS': False
+            })
+        SMTP_CONFIG['MAIL_DEFAULT_SENDER'] = (MAIL_SENDER_NAME, default_username)

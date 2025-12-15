@@ -12,7 +12,7 @@ from flask import Blueprint, Response, request, send_file, jsonify, abort
 from functools import wraps
 from magic.utils.TomlConfig import DoesitexistConfigToml, WriteConfigToml
 from magic.utils.Argon2Password import HashPassword
-from magic.utils.LmoadllOrm import (
+from magic.utils.db import (
     db_orm,
     UserModel,
     OptionModel,
@@ -20,7 +20,6 @@ from magic.utils.LmoadllOrm import (
     CheckSuperadminExists,
     GetOrSetSiteOption,
 )
-
 
 
 install_bp = Blueprint("install", __name__, url_prefix="/install")
@@ -39,13 +38,13 @@ def install_permissions(f):
 
 @install_bp.route("/", methods=["GET"])
 @install_permissions
-def install_index() -> Response | None:
+def install_index() -> Response:
     return send_file("admin/base/install.html")
 
 
 @install_bp.route("/check_database_configuration", methods=["POST"])
 @install_permissions
-def check_database_configuration() -> None:
+def check_database_configuration() -> Response: # type: ignore
     """判断是否有配置过数据库"""
     if (
         DoesitexistConfigToml("db", "sql_rd") == "sqlite"
@@ -135,7 +134,7 @@ def install_verification_db_conn() -> Response:
 
 @install_bp.route("/create_admin_account", methods=["POST"])
 @install_permissions
-def create_admin_account() -> Response | None:
+def create_admin_account() -> Response:
     """创建超级管理员账号并保存配置"""
     data = request.get_json()
 
@@ -160,7 +159,6 @@ def create_admin_account() -> Response | None:
         return jsonify({"success": False, "message": "请填写所有必填字段"})
 
     try:
-        # 加密密码
         hashed_password = HashPassword(superadministrator_password)
         if not hashed_password:
             return jsonify({"success": False, "message": "密码加密失败"})
@@ -184,14 +182,18 @@ def create_admin_account() -> Response | None:
             GetOrSetSiteOption(db_prefix, sql_sqlite_path, "site_url", site_url)
 
             # 在数据库中创建超级管理员账号
+            db_config = {
+                "type": "sqlite",
+                "path": sql_sqlite_path,
+                "prefix": db_prefix
+            }
             result = CheckSuperadminExists(
-                db_prefix,
-                sql_sqlite_path,
                 superadministrator_username,
                 superadministrator_email,
                 hashed_password,
+                db_prefix=db_prefix,
+                db_config=db_config
             )
-
             if not result[0]:
                 return jsonify(
                     {"success": False, "message": f"创建管理员账号失败: {result[1]}"}
@@ -354,3 +356,4 @@ def create_admin_account() -> Response | None:
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "message": f"创建管理员账号失败: {str(e)}"})
+

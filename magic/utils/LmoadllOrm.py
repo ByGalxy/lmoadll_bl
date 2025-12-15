@@ -4,9 +4,8 @@
 #@copyright  Copyright (c) 2025 lmoadll_bl team
 #@license  GNU General Public License 3.0
 """
-目前支持SQLite、MySQL、PostgreSQL数据库
+目前该模块已被弃用
 """
-
 import os
 import threading
 import time
@@ -177,7 +176,7 @@ class ConnectionPool:
         try:
             # 回滚任何未提交的事务
             adapter.rollback()
-            # 确保自动提交模式 (可选, 根据需求设置)
+            # 确保自动提交模式(可选, 根据需求设置)
             if hasattr(adapter.conn, "autocommit"):
                 adapter.conn.autocommit = True
         except (sqlite3.Error, pymysql.Error, psycopg2.Error, Exception):
@@ -305,7 +304,75 @@ class DatabaseAdapter:
 
     def _initialize_tables(self):
         """初始化数据库表结构"""
-        pass
+        # 创建users表
+        users_table = f"{self.db_prefix}users"
+        create_users_sql = self._get_create_users_sql(users_table)
+        self.execute(create_users_sql)
+
+        # 创建options表
+        options_table = f"{self.db_prefix}options"
+        create_options_sql = self._get_create_options_sql(options_table)
+        self.execute(create_options_sql)
+
+        # 创建options表索引
+        self._create_options_index(options_table)
+
+        # 创建用户元数据表
+        usermeta_table = f"{self.db_prefix}usermeta"
+        create_usermeta_sql = self._get_create_usermeta_sql(usermeta_table, users_table)
+        self.execute(create_usermeta_sql)
+
+        # 创建usermeta表索引
+        self._create_usermeta_indexes(usermeta_table)
+
+        # 创建扣子平台服务表
+        coze_ai_table = f"{self.db_prefix}coze_ai"
+        create_coze_ai_sql = self._get_create_coze_ai_sql(coze_ai_table)
+        self.execute(create_coze_ai_sql)
+
+        # 创建coze_ai表索引
+        self._create_coze_ai_indexes(coze_ai_table)
+
+        self.commit()
+
+    def _get_create_users_sql(self, users_table):
+        """获取创建users表的SQL语句"""
+        raise NotImplementedError("子类必须实现此方法")
+
+    def _get_create_options_sql(self, options_table):
+        """获取创建options表的SQL语句"""
+        raise NotImplementedError("子类必须实现此方法")
+
+    def _get_create_usermeta_sql(self, usermeta_table, users_table):
+        """获取创建usermeta表的SQL语句"""
+        raise NotImplementedError("子类必须实现此方法")
+
+    def _get_create_coze_ai_sql(self, coze_ai_table):
+        """获取创建coze_ai表的SQL语句"""
+        raise NotImplementedError("子类必须实现此方法")
+
+    def _create_options_index(self, options_table):
+        """创建options表索引"""
+        create_index_sql = f"CREATE UNIQUE INDEX IF NOT EXISTS {self.db_prefix}options__name_user ON {options_table} (name, user)"
+        self.execute(create_index_sql)
+
+    def _create_usermeta_indexes(self, usermeta_table):
+        """创建usermeta表索引"""
+        create_index1_sql = f"CREATE INDEX IF NOT EXISTS {self.db_prefix}usermeta_user_id ON {usermeta_table} (user_id)"
+        self.execute(create_index1_sql)
+        create_index2_sql = f"CREATE INDEX IF NOT EXISTS {self.db_prefix}usermeta_meta_key ON {usermeta_table} (meta_key)"
+        self.execute(create_index2_sql)
+        create_index3_sql = f"CREATE INDEX IF NOT EXISTS {self.db_prefix}usermeta_user_meta ON {usermeta_table} (user_id, meta_key)"
+        self.execute(create_index3_sql)
+
+    def _create_coze_ai_indexes(self, coze_ai_table):
+        """创建coze_ai表索引"""
+        create_index1_sql = f"CREATE INDEX IF NOT EXISTS {self.db_prefix}coze_ai_user_id ON {coze_ai_table} (user_id)"
+        self.execute(create_index1_sql)
+        create_index2_sql = f"CREATE INDEX IF NOT EXISTS {self.db_prefix}coze_ai_cozehh_id ON {coze_ai_table} (cozehh_id)"
+        self.execute(create_index2_sql)
+        create_index3_sql = f"CREATE INDEX IF NOT EXISTS {self.db_prefix}coze_ai_user_cozehh ON {coze_ai_table} (user_id, cozehh_id)"
+        self.execute(create_index3_sql)
 
 
 class SQLiteAdapter(DatabaseAdapter):
@@ -331,11 +398,9 @@ class SQLiteAdapter(DatabaseAdapter):
         # 初始化表结构
         self._initialize_tables()
 
-    def _initialize_tables(self):
-        """初始化数据库表结构"""
-        # 创建users表
-        users_table = f"{self.db_prefix}users"
-        create_users_sql = f"""
+    def _get_create_users_sql(self, users_table):
+        """获取创建users表的SQL语句"""
+        return f"""
             CREATE TABLE IF NOT EXISTS {users_table} (
             uid INTEGER NOT NULL PRIMARY KEY,
             name VARCHAR(32) DEFAULT NULL,
@@ -343,29 +408,51 @@ class SQLiteAdapter(DatabaseAdapter):
             mail VARCHAR(150) DEFAULT NULL,
             url VARCHAR(150) DEFAULT NULL,
             createdAt INTEGER DEFAULT 0,
+            lastLogin INTEGER DEFAULT 0,
             isActive INTEGER DEFAULT 0,
             isLoggedIn INTEGER DEFAULT 0,
             "group" VARCHAR(16) DEFAULT 'visitor'
         )
         """
-        self.execute(create_users_sql)
 
-        # 创建options表
-        options_table = f"{self.db_prefix}options"
-        create_options_sql = f"""
+    def _get_create_options_sql(self, options_table):
+        """获取创建options表的SQL语句"""
+        return f"""
             CREATE TABLE IF NOT EXISTS {options_table} (
             name VARCHAR(32) NOT NULL,
             user INT(10) DEFAULT '0' NOT NULL,
             value TEXT
         )
         """
-        self.execute(create_options_sql)
 
-        # 创建唯一索引
-        create_index_sql = f"CREATE UNIQUE INDEX IF NOT EXISTS {self.db_prefix}options__name_user ON {options_table} (name, user)"
-        self.execute(create_index_sql)
+    def _get_create_usermeta_sql(self, usermeta_table, users_table):
+        """获取创建usermeta表的SQL语句"""
+        return f"""
+            CREATE TABLE IF NOT EXISTS {usermeta_table} (
+            umeta_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            meta_key VARCHAR(255) NOT NULL,
+            meta_value TEXT,
+            created_at INTEGER DEFAULT 0,
+            updated_at INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES {users_table} (uid) ON DELETE CASCADE
+        )
+        """
 
-        self.commit()
+    def _get_create_coze_ai_sql(self, coze_ai_table):
+        """获取创建coze_ai表的SQL语句"""
+        return f"""
+            CREATE TABLE IF NOT EXISTS {coze_ai_table} (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            cozehh_id INTEGER NOT NULL,
+            name VARCHAR(64) DEFAULT NULL,
+            created_at INTEGER DEFAULT 0,
+            updated_at INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES {self.db_prefix}users (uid) ON DELETE CASCADE,
+            UNIQUE (user_id, cozehh_id)
+        )
+        """
 
     def disconnect(self):
         if self.conn:
@@ -421,11 +508,9 @@ class MySQLAdapter(DatabaseAdapter):
         # 初始化表结构
         self._initialize_tables()
 
-    def _initialize_tables(self):
-        """初始化数据库表结构"""
-        # 创建users表
-        users_table = f"{self.db_prefix}users"
-        create_users_sql = f"""
+    def _get_create_users_sql(self, users_table):
+        """获取创建users表的SQL语句"""
+        return f"""
             CREATE TABLE IF NOT EXISTS {users_table} (
             uid INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(32) DEFAULT NULL,
@@ -433,16 +518,16 @@ class MySQLAdapter(DatabaseAdapter):
             mail VARCHAR(150) DEFAULT NULL,
             url VARCHAR(150) DEFAULT NULL,
             createdAt INT DEFAULT 0,
+            lastLogin INT DEFAULT 0,
             isActive INT DEFAULT 0,
             isLoggedIn INT DEFAULT 0,
             `group` VARCHAR(16) DEFAULT 'visitor'
         )
         """
-        self.execute(create_users_sql)
 
-        # 创建options表
-        options_table = f"{self.db_prefix}options"
-        create_options_sql = f"""
+    def _get_create_options_sql(self, options_table):
+        """获取创建options表的SQL语句"""
+        return f"""
             CREATE TABLE IF NOT EXISTS {options_table} (
             name VARCHAR(32) NOT NULL,
             user INT(10) DEFAULT '0' NOT NULL,
@@ -450,9 +535,35 @@ class MySQLAdapter(DatabaseAdapter):
             PRIMARY KEY (name, user)
         )
         """
-        self.execute(create_options_sql)
 
-        self.commit()
+    def _get_create_usermeta_sql(self, usermeta_table, users_table):
+        """获取创建usermeta表的SQL语句"""
+        return f"""
+            CREATE TABLE IF NOT EXISTS {usermeta_table} (
+            umeta_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            meta_key VARCHAR(255) NOT NULL,
+            meta_value TEXT,
+            created_at INT DEFAULT 0,
+            updated_at INT DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES {users_table} (uid) ON DELETE CASCADE
+        )
+        """
+
+    def _get_create_coze_ai_sql(self, coze_ai_table):
+        """获取创建coze_ai表的SQL语句"""
+        return f"""
+            CREATE TABLE IF NOT EXISTS {coze_ai_table} (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            cozehh_id INT NOT NULL,
+            name VARCHAR(64) DEFAULT NULL,
+            created_at INT DEFAULT 0,
+            updated_at INT DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES {self.db_prefix}users (uid) ON DELETE CASCADE,
+            UNIQUE (user_id, cozehh_id)
+        )
+        """
 
     def disconnect(self):
         if self.conn:
@@ -507,11 +618,9 @@ class PostgreSQLAdapter(DatabaseAdapter):
         # 初始化表结构
         self._initialize_tables()
 
-    def _initialize_tables(self):
-        """初始化数据库表结构"""
-        # 创建users表
-        users_table = f"{self.db_prefix}users"
-        create_users_sql = f"""
+    def _get_create_users_sql(self, users_table):
+        """获取创建users表的SQL语句"""
+        return f"""
             CREATE TABLE IF NOT EXISTS {users_table} (
             uid SERIAL PRIMARY KEY,
             name VARCHAR(32) DEFAULT NULL,
@@ -519,16 +628,16 @@ class PostgreSQLAdapter(DatabaseAdapter):
             mail VARCHAR(150) DEFAULT NULL,
             url VARCHAR(150) DEFAULT NULL,
             createdAt INTEGER DEFAULT 0,
+            lastLogin INTEGER DEFAULT 0,
             isActive INTEGER DEFAULT 0,
             isLoggedIn INTEGER DEFAULT 0,
             "group" VARCHAR(16) DEFAULT 'visitor'
         )
         """
-        self.execute(create_users_sql)
 
-        # 创建options表
-        options_table = f"{self.db_prefix}options"
-        create_options_sql = f"""
+    def _get_create_options_sql(self, options_table):
+        """获取创建options表的SQL语句"""
+        return f"""
             CREATE TABLE IF NOT EXISTS {options_table} (
             name VARCHAR(32) NOT NULL,
             user INTEGER DEFAULT 0 NOT NULL,
@@ -536,9 +645,35 @@ class PostgreSQLAdapter(DatabaseAdapter):
             PRIMARY KEY (name, user)
         )
         """
-        self.execute(create_options_sql)
 
-        self.commit()
+    def _get_create_usermeta_sql(self, usermeta_table, users_table):
+        """获取创建usermeta表的SQL语句"""
+        return f"""
+            CREATE TABLE IF NOT EXISTS {usermeta_table} (
+            umeta_id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            meta_key VARCHAR(255) NOT NULL,
+            meta_value TEXT,
+            created_at INTEGER DEFAULT 0,
+            updated_at INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES {users_table} (uid) ON DELETE CASCADE
+        )
+        """
+
+    def _get_create_coze_ai_sql(self, coze_ai_table):
+        """获取创建coze_ai表的SQL语句"""
+        return f"""
+            CREATE TABLE IF NOT EXISTS {coze_ai_table} (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            cozehh_id INTEGER NOT NULL,
+            name VARCHAR(64) DEFAULT NULL,
+            created_at INTEGER DEFAULT 0,
+            updated_at INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES {self.db_prefix}users (uid) ON DELETE CASCADE,
+            UNIQUE (user_id, cozehh_id)
+        )
+        """
 
     def disconnect(self):
         if self.conn:
@@ -736,6 +871,114 @@ class OptionModel(Model):
     """选项模型"""
 
     _primary_key = "name"
+
+
+class CozeAIModel(Model):
+    """扣子AI服务模型"""
+
+    _table_name = "coze_ai"
+    _primary_key = "id"
+
+    @classmethod
+    def find_by_user_id(cls, db, user_id):
+        """根据用户ID查找记录"""
+        return cls.find(db, user_id=user_id)
+
+    @classmethod
+    def find_by_cozehh_id(cls, db, cozehh_id):
+        """根据扣子ID查找记录"""
+        return cls.find(db, cozehh_id=cozehh_id)
+
+    @classmethod
+    def find_by_user_and_cozehh(cls, db, user_id, cozehh_id):
+        """根据用户ID和扣子ID查找记录"""
+        return cls.find(db, user_id=user_id, cozehh_id=cozehh_id)
+
+    @classmethod
+    def delete_by_user_id(cls, db, user_id):
+        """根据用户ID删除记录"""
+        table_name = cls.get_table_name()
+        query = f"DELETE FROM {table_name} WHERE user_id = ?"
+        
+        # 替换参数占位符为数据库特定的格式
+        if db.config.get("type") == "mysql":
+            query = query.replace("?", "%s")
+        elif db.config.get("type") == "postgresql":
+            query = query.replace("?", "%s")
+            
+        db.execute(query, [user_id])
+        db.commit()
+        return db.cursor.rowcount
+
+    @classmethod
+    def validate_data(cls, **kwargs):
+        """验证数据有效性"""
+        errors = []
+        
+        # 验证必填字段
+        required_fields = ['user_id', 'cozehh_id']
+        for field in required_fields:
+            if field not in kwargs or kwargs[field] is None:
+                errors.append(f"字段 '{field}' 是必填的")
+        
+        # 验证数据类型
+        if 'user_id' in kwargs and not isinstance(kwargs['user_id'], int):
+            errors.append("字段 'user_id' 必须是整数")
+            
+        if 'cozehh_id' in kwargs and not isinstance(kwargs['cozehh_id'], int):
+            errors.append("字段 'cozehh_id' 必须是整数")
+            
+        if 'name' in kwargs and kwargs['name'] and len(kwargs['name']) > 64:
+            errors.append("字段 'name' 长度不能超过64个字符")
+            
+        return errors
+
+    @classmethod
+    def create_with_validation(cls, db, **kwargs):
+        """带验证的创建方法"""
+        errors = cls.validate_data(**kwargs)
+        if errors:
+            raise ValueError("数据验证失败: " + "; ".join(errors))
+        
+        # 检查唯一性约束
+        existing = cls.find_by_user_and_cozehh(db, kwargs['user_id'], kwargs['cozehh_id'])
+        if existing:
+            raise ValueError("该用户和扣子ID的组合已存在")
+            
+        return cls.create(db, **kwargs)
+
+    @classmethod
+    def update_with_validation(cls, db, id_value, **kwargs):
+        """带验证的更新方法"""
+        errors = cls.validate_data(**kwargs)
+        if errors:
+            raise ValueError("数据验证失败: " + "; ".join(errors))
+            
+        return cls.update(db, id_value, **kwargs)
+
+    @classmethod
+    def set_timestamps(cls, **kwargs):
+        """设置时间戳"""
+        import time
+        current_time = int(time.time())
+        
+        if 'created_at' not in kwargs or not kwargs['created_at']:
+            kwargs['created_at'] = current_time
+        kwargs['updated_at'] = current_time
+        
+        return kwargs
+
+    @classmethod
+    def create_with_timestamps(cls, db, **kwargs):
+        """带时间戳的创建方法"""
+        kwargs = cls.set_timestamps(**kwargs)
+        return cls.create(db, **kwargs)
+
+    @classmethod
+    def update_with_timestamps(cls, db, id_value, **kwargs):
+        """带时间戳的更新方法"""
+        kwargs = cls.set_timestamps(**kwargs)
+        return cls.update(db, id_value, **kwargs)
 
 
 class ORM:

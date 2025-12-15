@@ -77,9 +77,13 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch(`/api/admin/users/search?q=${encodeURIComponent(searchTerm)}`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('admin_token')
-            }
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                search_term: searchTerm,
+                page: currentPage,
+                page_size: pageSize
+            })
         })
             .then(response => {
                 if (!response.ok) {

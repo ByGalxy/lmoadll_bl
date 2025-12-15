@@ -72,27 +72,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             })
             .then(data => {
-                setLoading(false);
+                //setLoading(false);
 
                 if (data.code === 200) {
-                    // 存储用户信息到localStorage
-                    if (data.data && data.data.user_info) {
-                        try {
-                            localStorage.setItem('userInfo', JSON.stringify(data.data.user_info));
-                        } catch (e) {
-                            console.error('存储用户信息失败:', e);
-                        }
-                    }
-                    
-                    // 登录成功，跳转到仪表盘
+                    showSuccess(data.message || '登录成功！正在跳转...');
                     const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/admin';
-                    window.location.href = redirectUrl;
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 2000);
                 } else {
                     showError(data.message || '登录失败，请重试');
                 }
             })
             .catch(error => {
-                setLoading(false);
                 showError(error.message || '登录失败，请检查网络连接后重试');
             });
     });
@@ -105,6 +97,33 @@ document.addEventListener('DOMContentLoaded', function () {
         // 3秒后自动隐藏错误信息
         setTimeout(() => {
             errorMessage.classList.remove('show');
+        }, 3000);
+    }
+
+    // 显示成功信息
+    function showSuccess(message) {
+        // 创建或获取成功消息元素
+        let successMessage = document.getElementById('successMessage');
+        if (!successMessage) {
+            successMessage = document.createElement('div');
+            successMessage.id = 'successMessage';
+            successMessage.className = 'success-message';
+            const successText = document.createElement('span');
+            successText.id = 'successText';
+            successMessage.appendChild(successText);
+            errorMessage.parentNode.insertBefore(successMessage, errorMessage.nextSibling);
+        }
+        
+        const successText = document.getElementById('successText');
+        successText.textContent = message;
+        successMessage.classList.add('show');
+        
+        // 隐藏错误消息（如果有）
+        errorMessage.classList.remove('show');
+        
+        // 3秒后自动隐藏成功信息
+        setTimeout(() => {
+            successMessage.classList.remove('show');
         }, 3000);
     }
 

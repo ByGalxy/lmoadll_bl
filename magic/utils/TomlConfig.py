@@ -71,6 +71,5 @@ def WriteConfigToml(a, b, c):
     # 设置配置值
     config[a][b] = c
 
-    # 写回配置文件
     with open(config_path, "wb") as f:
         dump(config, f)

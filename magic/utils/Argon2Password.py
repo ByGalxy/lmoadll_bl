@@ -21,8 +21,6 @@ __all__ = [
     'VerifyPassword'
 ]
 
-
-# 创建PasswordHasher实例
 ph = PasswordHasher(
     time_cost=2,         # 迭代次数，推荐2-4
     memory_cost=102400,  # 内存开销（单位KB，如100MB）

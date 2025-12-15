@@ -4,12 +4,10 @@
 #@copyright  Copyright (c) 2025 lmoadll_bl team
 #@license  GNU General Public License 3.0
 
-
 from flask import Flask
 from magic import Init_module
 from dotenv import load_dotenv
 import os
-
 
 load_dotenv()
 app = Flask(__name__)

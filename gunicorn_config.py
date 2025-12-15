@@ -7,8 +7,8 @@ import multiprocessing
 bind = "0.0.0.0:2324"
 """绑定地址和端口"""
 
-worker_class = "sync"
-"""工作进程类型, 可以是sync, gevent, eventlet等"""
+worker_class = "gthread"
+"""工作进程类型, 可以是sync, gevent, gthread, eventlet等"""
 
 pidfile = "gunicorn.pid"
 """进程ID文件"""

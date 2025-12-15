@@ -5,11 +5,12 @@
 #@license  GNU General Public License 3.0
 
 import logging
+import json
 from flask import Blueprint, Response, request
 from admin import admin_required
 from magic.utils.token import GetCurrentUserIdentity
 from magic.utils.TomlConfig import DoesitexistConfigToml
-from magic.utils.LmoadllOrm import (
+from magic.utils.db import (
     GetUserRoleByIdentity,
     GetUserCount,
     GetUserNameByIdentity,
@@ -76,7 +77,10 @@ def admin_get_admin_identity() -> Response:
 def admin_get_name_options() -> Response:
     """get name options"""
     try:
-        option_name = request.json.get('user').strip()
+        if request.json is None:
+            return Response('', mimetype='text/plain')
+        
+        option_name = request.json.get('user', '').strip()
         name_options = GetSiteOptionByName(option_name) # [True, {"name": name, "user": user, "value": value}]
         if name_options[0] and name_options[1] is not None:
             return Response(name_options[1]['value'], mimetype='text/plain')
@@ -91,17 +95,13 @@ def admin_get_name_options() -> Response:
 @admin_required
 def admin_search_users() -> Response:
     """搜索用户API"""
-    # 获取搜索关键词
     keyword = request.args.get('q', '').strip()
     
     if not keyword:
         return Response('{"users": []}', mimetype='application/json')
-    
     try:
         results = SearchUsers(keyword)
-        
         if isinstance(results, list) and results and isinstance(results[0], dict):
-            import json
             return Response(json.dumps({"users": results}), mimetype='application/json')
         elif isinstance(results, list) and not results:
             return Response('{"users": []}', mimetype='application/json')
@@ -117,11 +117,12 @@ def admin_search_users() -> Response:
 def admin_set_name_options() -> Response:
     """set name options"""
     try:
+        if request.json is None:
+            return Response("", mimetype='text/plain')
         site_name = request.json.get('site_name').strip()
         site_description = request.json.get('site_description').strip()
         site_keywords = request.json.get('site_keywords').strip()
         enable_registration = str(request.json.get('enable_registration')).lower()
-        # 获取数据库前缀和路径
         db_prefix = DoesitexistConfigToml("db", "sql_prefix")
         sql_sqlite_path = DoesitexistConfigToml("db", "sql_sqlite_path")
 

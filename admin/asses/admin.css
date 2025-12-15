@@ -245,6 +245,25 @@ tr:last-child td {
 .status.inactive {
     background-color: #FBEAE9;
     color: #E0245E;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.status.active {
+    background-color: #E8F6F3;
+    color: #17BF63;
+}
+
+.status.pending {
+    background-color: #FFF9E6;
+    color: #FFAD1F;
+}
+
+.status.inactive {
+    background-color: #FBEAE9;
+    color: #E0245E;
 }
 
 .user-cell {
@@ -448,6 +467,19 @@ tr:last-child td {
     display: block;
 }
 
+.success-message {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.success-message.show {
+    display: block;
+}
+
 .password-container {
     position: relative;
 }
@@ -569,4 +601,6 @@ tr:last-child td {
         padding: 20px;
     }
 }
+
+
 

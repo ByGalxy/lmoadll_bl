@@ -58,12 +58,11 @@ class JWTKeyManager:
         """清理过期密钥"""
         current_time = get_utc_now()
         expired_keys: list[str] = []
-        
         for key, created_time in self.key_dict.items():
             key_age = current_time - created_time
             if key_age.days > self.rotation_days:
                 expired_keys.append(key)
-        
+
         for key in expired_keys:
             del self.key_dict[key]
     
@@ -82,7 +81,7 @@ class JWTKeyManager:
         self._clean_old_keys()
         return list(self.key_dict.keys())
 
-    
+
 jwt_key_manager = JWTKeyManager(rotation_days=7, max_keys=8)
 
 
@@ -92,9 +91,8 @@ def InitJwtManager(app: Flask) -> JWTManager:
     if not app.config.get('JWT_SECRET_KEY'):
         app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)
     
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)
-    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=7)
-    
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=60)
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     jwt = JWTManager(app)
     
     @jwt.encode_key_loader
@@ -105,12 +103,13 @@ def InitJwtManager(app: Flask) -> JWTManager:
     @jwt.decode_key_loader
     def decode_key_callback(header, payload):
         """
-        解码时智能选择密钥, 获取所有有效密钥, 如果有令牌, 尝试自动选择正确的密钥
+        解码时智能选择密钥, 获取所有有效密钥, 如果有令牌, 尝试自动选择正确的密钥（单token模式）
         """
         valid_keys = jwt_key_manager.get_all_valid_keys()
         
         auth_header = request.headers.get('Authorization', '')
-        cookie_token = request.cookies.get('lmoadllUser')
+        # 单token模式：只使用lmoadll_refresh_token作为唯一token
+        cookie_token = request.cookies.get('lmoadll_refresh_token')
         
         token = None
         if auth_header and auth_header.startswith('Bearer '):
@@ -198,7 +197,7 @@ def RefreshToken(lmoadll_refresh_token, request=None):
     
     Args:
         refresh_token: 有效的Refresh Token
-        request: Flask请求对象，用于进行额外的安全验证
+        request: Flask请求对象,用于进行额外的安全验证
     
     Returns:
         str: 新的Access Token, 如果刷新失败则返回None
@@ -223,11 +222,11 @@ def RefreshToken(lmoadll_refresh_token, request=None):
             # TODO 需要额外的安全检查，例如验证来源IP等
             # 验证来源IP（可选，如果需要严格的会话绑定）
             # 注意：在实际生产环境中，需要考虑代理和CDN的情况
-            current_ip = request.remote_addr
+            current_ip = request.remote_addr  # noqa: F841
             # 可以在token中添加更多的上下文信息进行验证
             
             # 验证用户代理
-            current_user_agent = request.headers.get('User-Agent', '')
+            current_user_agent = request.headers.get('User-Agent', '')  # noqa: F841
             # 可以在创建token时存储这些信息，然后在这里进行验证
             
             # 检查请求频率（可以集成到Redis等缓存中）
@@ -271,12 +270,13 @@ def GetCurrentUserIdentity():
             # Header验证失败，继续尝试cookie方式
             pass
         
-        access_token = request.cookies.get('lmoadllUser')
-        if access_token:
+        # 单token模式：只使用lmoadll_refresh_token作为唯一token
+        token = request.cookies.get('lmoadll_refresh_token')
+        if token:
             try:
-                decoded_token = decode_token(access_token)
-                # 验证是否为access token类型
-                if decoded_token.get('token_type') == 'access':
+                decoded_token = decode_token(token)
+                # 验证token类型为refresh（单token模式下的唯一token）
+                if decoded_token.get('token_type') == 'refresh':
                     identity = decoded_token.get('sub')
                     if identity:
                         return identity

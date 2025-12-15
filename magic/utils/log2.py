@@ -7,7 +7,6 @@
 日志配置模块
 提供颜色日志格式化和缩写日志级别功能，以及日志文件保存功能
 """
-
 import logging
 import colorlog
 import os
@@ -32,7 +31,6 @@ def get_log_directory():
     """获取日志目录路径"""
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     log_directory = os.path.join(project_root, 'contents', 'logs')
-    # 确保日志目录存在
     os.makedirs(log_directory, exist_ok=True)
     return log_directory
 
@@ -41,29 +39,21 @@ def get_start_count():
     """获取启动次数(通过扫描目录中现有日志文件)"""
     log_dir = get_log_directory()
     current_date = datetime.datetime.now().strftime('%Y-%m-%d')
-    
-    # 扫描目录中今天的日志文件
     count = 0
     try:
         for filename in os.listdir(log_dir):
             if filename.startswith(current_date) and filename.endswith('.log'):
-                # 提取启动次数
                 try:
-                    # 文件名格式: 2023-04-01-1.log
                     parts = filename.split('-')
                     if len(parts) >= 3:
-                        # 尝试提取最后一个数字部分
                         number_part = parts[-1].split('.')[0]
                         if number_part.isdigit():
                             file_count = int(number_part)
                             count = max(count, file_count)
                 except Exception:
-                    # 如果解析失败，忽略该文件
                     pass
     except Exception as e:
         print(f"扫描日志文件失败: {e}")
-    
-    # 返回下一个启动次数
     return count + 1
 
 
@@ -72,10 +62,8 @@ def create_log_file():
     log_dir = get_log_directory()
     current_date = datetime.datetime.now().strftime('%Y-%m-%d')
     start_count = get_start_count()
-
     log_filename = f"{current_date}-{start_count}.log"
     log_filepath = os.path.join(log_dir, log_filename)
-    
     return log_filepath
 
 
@@ -83,13 +71,9 @@ def archive_old_logs():
     """打包旧日志文件"""
     log_dir = get_log_directory()
     current_date = datetime.datetime.now().strftime('%Y-%m-%d')
-    
-    # 按日期分组日志文件
     date_groups = {}
     for filename in os.listdir(log_dir):
-        # 跳过目录和非日志文件
         if os.path.isfile(os.path.join(log_dir, filename)) and filename.endswith('.log'):
-            # 提取日期部分(格式: 2025-11-19)
             try:
                 # 文件名格式:2025-11-19-1.log
                 date_part = '-'.join(filename.split('-')[:3])
@@ -99,7 +83,6 @@ def archive_old_logs():
                         date_groups[date_part] = []
                     date_groups[date_part].append(filename)
             except Exception:
-                # 如果解析失败，跳过该文件
                 continue
     
     # 为每个日期的日志文件创建zip包
@@ -107,17 +90,12 @@ def archive_old_logs():
         if len(files) > 0:
             zip_filename = f"{date_str}-logs.zip"
             zip_filepath = os.path.join(log_dir, zip_filename)
-            
-            # 检查是否已经存在同名的zip文件
             if os.path.exists(zip_filepath):
-                # 如果已存在，先删除旧的zip文件
                 try:
                     os.remove(zip_filepath)
                 except Exception as e:
                     print(f"删除旧zip文件失败: {e}")
                     continue
-            
-            # 创建zip文件
             try:
                 with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
                     for filename in files:
@@ -133,11 +111,9 @@ def archive_old_logs():
 # 使用环境变量来跟踪是否已经初始化过日志系统
 # 检查是否在Flask的重启过程中
 _is_reload = os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
+_configured_logger = None # 全局变量，用于存储已配置的logger
 
-# 全局变量，用于存储已配置的logger
-_configured_logger = None
 
-# 初始化日志配置
 def init_logger():
     """初始化日志配置"""
     global _configured_logger
@@ -213,16 +189,10 @@ def init_logger():
                 ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
                 record.msg = ansi_escape.sub('', record.msg)
             return True
-    
     file_handler.addFilter(NoColorFilter())
     logger.addHandler(file_handler)
-    
     logger.info(f"log file: {log_filepath}")
-    
-    # 保存已配置的logger
-    _configured_logger = logger
-    
+    _configured_logger = logger # 保存已配置的logger
     return logger
-
 
 logger = init_logger()

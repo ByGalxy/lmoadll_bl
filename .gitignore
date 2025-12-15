@@ -12,6 +12,9 @@ __pycache__/
 .Python
 .venv/
 env/
+plugin/
+logs/
+docs/
 bin/
 build/
 develop-eggs/
@@ -25,6 +28,8 @@ var/
 include/
 man/
 venv/
+docs/
+target/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -71,6 +76,7 @@ docs/_build/
 # Pyenv
 .python-version
 
+.trae/
 
 .conda/
 themes/

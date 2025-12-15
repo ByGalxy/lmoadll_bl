@@ -12,7 +12,7 @@
 from functools import wraps
 from flask import Blueprint, send_file, Response, redirect, url_for, request
 from magic.utils.token import GetCurrentUserIdentity
-from magic.utils.LmoadllOrm import GetUserRoleByIdentity
+from magic.utils.db import GetUserRoleByIdentity
 import logging
 
 
@@ -20,7 +20,6 @@ import logging
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 
-# 没权限就想来? 没门()
 def admin_required(f):
     """
     检查登录状态
@@ -45,8 +44,7 @@ def admin_required(f):
                 # 如果是错误列表 [False, message]
                 print(f"查询用户角色失败喵: {user_group[1]}")
                 return redirect('/')
-            
-            # 如果是元组结果，检查权限
+
             if isinstance(user_group, tuple) and len(user_group) > 0:
                 user_role = user_group[0]
                 
