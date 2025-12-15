@@ -104,11 +104,6 @@ def login_api():
         "password": "用户输入的密码"
     }
     ```
-
-    响应格式：
-        成功: `{"code": 200, "message": "登录成功", "user_info": {用户信息}}`
-        失败: `{"code": 错误码, "message": "错误信息"}`
-        注意: `JWT令牌通过cookie传递, 不在响应JSON中包含`
     """
     data = request.get_json()
     if not data:
@@ -124,7 +119,6 @@ def login_api():
     if not VerifyPassword(user['password'], data["password"]):
         return response_handler.custom_error_response("邮箱或密码错误喵喵")
     
-    # 生成令牌
     tokens = CreateTokens(identity=str(user['uid']))
     if not tokens:
         return response_handler.error_response("生成令牌失败喵喵")
@@ -196,10 +190,6 @@ def logout():
     处理登出请求
     - 清除cookie中的access_token和refresh_token
     - 客户端也应该删除本地存储的令牌
-
-    响应格式：
-    * 成功: `{"code": 200, "message": "登出成功喵"}`
-    * 失败: `{"code": 500, "message": "错误信息"}`
     """
     response = response_handler.success_response(None, "登出成功喵")
     
@@ -228,14 +218,6 @@ def user_api():
         }
     }
     ```
-
-    错误:
-    ```
-    {
-        "code": 401,
-        "message": "用户未登录喵喵"
-    }
-    ```
     """
     user_identity = GetCurrentUserIdentity()
 
@@ -260,7 +242,6 @@ def user_api():
         for result in user_info_results:
             if result and isinstance(result, dict):
                 user_meta.update(result)
-        
         user_info = {
             "uid": user[0],
             "name": user[1],
@@ -269,13 +250,10 @@ def user_api():
             "LastLoginTime": user[4],
             **user_meta
         }
-
         return user_info
-        
     except Exception as e:
         logging.error(f"查询用户信息时出错喵: {e}")
         return response_handler.error_response("查询用户信息失败喵喵")
-        
     finally:
         if db:
             db_orm.return_db(db, "default")
@@ -307,9 +285,6 @@ def register_api():
         "moemoepoint": "用户记忆点", "role": "用户角色", "isChechIn": false, "dailyToolsetUploadCount": 0
     }
     ```
-    失败:
-    ```
-    {"code": 错误码, "message": "错误信息"}
     ```
     """
     data = request.get_json()
@@ -379,13 +354,10 @@ def register_api():
         
     # 创建新用户
     try:
-        # 获取数据库连接
         success, message, db, cursor, table_name = GetDbConnection("users")
-        
         if not success:
             print(f"数据库连接失败: {message}")
             return response_handler.error_response(f"数据库连接失败喵喵: {message}")
-        
         try:
             current_time = int(time.time())
             cursor.execute(
@@ -423,18 +395,14 @@ def register_api():
                 "isChechIn": False,           # 未签到
                 "dailyToolsetUploadCount": 0  # 每日上传数量为0
             }
-            
             return user_info
-        
         except Exception as e:
             # 回滚事务
             if db:
                 db.rollback()
             logging.error(f"创建用户时出错: {str(e)}")
             return response_handler.error_response(f"创建用户失败喵喵: {str(e)}")
-        
         finally:
-            # 释放数据库连接
             if db:
                 db_orm.return_db(db, "default")
     
@@ -453,23 +421,6 @@ def send_email_code_register_api():
     POST /api/auth/email/code/register
     {
         "email": "用户邮箱"
-    }
-    ```
-    
-    响应格式:
-
-    成功:
-        `{"code": 200, "codeSalt": "验证码哈希"}`
-
-    失败:
-    ```
-    {
-        "statusCode": 233,
-        "stack": [],
-        "data": {
-            "code": 233,
-            "message": "您的邮箱已经被使用了, 请换一个试试"
-        }
     }
     ```
     """
@@ -501,8 +452,6 @@ def send_email_code_register_api():
     except Exception as e:
         logging.error(f"检查邮箱是否已存在时出错喵喵: {str(e)}")
         return response_handler.error_response("数据库查询失败喵喵")
-    
-    # 生成6位字母数字混合验证码
     try:
         random.seed()
         chars = string.ascii_letters + string.digits
@@ -516,10 +465,8 @@ def send_email_code_register_api():
         logging.error("验证码哈希失败")
         return response_handler.error_response("验证码生成失败喵喵")
     
-    # 计算过期时间
     expires_at = int(time.time()) + CODE_EXPIRATION_TIME
     
-    # 存储验证码信息到内存中
     verification_codes[email] = {
         "code": verification_code,
         "hash": code_salt,
@@ -527,7 +474,6 @@ def send_email_code_register_api():
         "created_at": int(time.time())
     }
     print(f"验证码 {verification_code} 已成功生成并存储到内存中, 过期时间为 {expires_at}")
-    # 实现邮件发送功能
     try:
         msg = Message(
             subject="注册验证码",
@@ -535,21 +481,17 @@ def send_email_code_register_api():
             sender=SMTP_CONFIG['MAIL_DEFAULT_SENDER']
         )
         
-        # 邮件正文
         msg.body = f"哈喽～✨ 你有一条可爱的注册验证码待查收!请在 5 分钟内使用它完成注册哦 ⏳,\n验证码过期后需要重新获取~\n\n如果不是你在注册,忽略这封邮件就好啦 💌\n\n你的注册验证码是:{verification_code}, 本邮件由系统自动发送🐾, 无需回复."
         
-        # 发送邮件
         mail.send(msg)
         # print(f"验证码 {verification_code} 已成功发送到邮箱 {email}")
     except Exception as e:
         logging.error(f"发送邮件失败喵: {str(e)}")
-        # 从内存中删除已生成的验证码
         if email in verification_codes:
             del verification_codes[email]
         return response_handler.error_response("发送邮件失败，请稍后重试喵喵")
     
     cleanup_expired_codes()
-
     return {"codeSalt": code_salt}
 
 
@@ -574,44 +516,10 @@ def user_info_edit_api():
         "occupation": "职业"
     }
     ```
-    
-    响应格式：
-    
-    成功:
-    ```
-    {
-        "code": 200,
-        "message": "个人信息更新成功喵",
-        "data": {
-            "description": "更新后的个人描述",
-            "age": 25,
-            "gender": 1,
-            "avatar": "头像URL",
-            "location": "地理位置",
-            "website": "个人网站",
-            "bio": "个人简介",
-            "birthday": "生日",
-            "phone": "电话号码",
-            "occupation": "职业"
-        }
-    }
-    ```
-    
-    失败:
-    ```
-    {
-        "code": 错误码,
-        "message": "错误信息",
-        "errors": ["具体错误信息1", "具体错误信息2"]
-    }
-    ```
     """
-    # 验证用户身份
     user_identity = GetCurrentUserIdentity()
     if user_identity is None:
         return response_handler.custom_error_response("用户未登录喵喵")
-    
-    # 获取请求数据
     data = request.get_json()
     if not data:
         return response_handler.custom_error_response("请求数据为空喵喵")
@@ -643,13 +551,11 @@ def user_info_edit_api():
     # 保存用户数据
     from contents.plugin.wes_user_information.main import save_user_meta
     success = save_user_meta(user_identity, processed_data)
-    
     if not success:
         return response_handler.error_response("保存用户信息失败喵喵")
     
     # 使用插件系统进行后处理
     call_plugin_hook("user_data_post_save", processed_data)
-    
     return processed_data
 
 # @auth_bp.route('/refresh', methods=['POST'])

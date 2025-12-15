@@ -8,18 +8,20 @@
 
 提供插件的动态加载、卸载、状态查询等功能
 """
-
-from flask import Blueprint, request, jsonify
-from magic.PluginSystem import get_plugin_manager
 import logging
 import os
 import json
+from flask import Blueprint, request
+from magic.PluginSystem import get_plugin_manager
+from magic.middleware.response import response_handler
 from typing import Any
+
 
 plugin_api_bp = Blueprint('plugin_api', __name__)
 
 
 @plugin_api_bp.route('/plugins', methods=['GET'])
+@response_handler.response_middleware
 def get_plugins():
     """获取所有插件信息
 
@@ -116,19 +118,11 @@ def get_plugins():
                         
                         plugin_list.append(plugin_info)
         
-        return jsonify({
-            "code": 200,
-            "data": {
-                "plugins": plugin_list
-            }
-        }), 200
+        return response_handler.success_response(plugin_list)
         
     except Exception as e:
         logging.error(f"获取插件列表失败: {e}")
-        return jsonify({
-            "code": 500,
-            "message": "获取插件列表失败"
-        }), 500
+        return response_handler.error_response("获取插件列表失败")
 
 
 @plugin_api_bp.route('/plugins/<plugin_name>', methods=['POST'])
@@ -143,66 +137,35 @@ def load_plugin(plugin_name):
         "action": "load"
     }
     ```
-    
-    响应格式：
-    ```json
-    {
-        "code": 200,
-        "message": "插件加载成功"
-    }
-    ```
     """
     try:
         data = request.get_json()
         if not data or data.get('action') != 'load':
-            return jsonify({
-                "code": 400,
-                "message": "请求参数错误"
-            }), 400
+            return response_handler.custom_error_response("请求参数错误")
         
         plugin_manager = get_plugin_manager()
         plugin_dir = plugin_manager.plugin_dir
         
-        # 检查插件是否已加载
         if plugin_name in plugin_manager.get_all_plugins():
-            return jsonify({
-                "code": 400,
-                "message": "插件已加载"
-            }), 400
+            return response_handler.custom_error_response("插件已加载")
         
         plugin_path = os.path.join(plugin_dir, plugin_name)
         
-        # 优先尝试加载文件夹插件
         if os.path.isdir(plugin_path):
             init_file = os.path.join(plugin_path, "__init__.py")
             if os.path.exists(init_file):
                 if plugin_manager.load_plugin_from_folder(plugin_name, plugin_path):
-                    return jsonify({
-                        "code": 200,
-                        "message": "插件加载成功"
-                    }), 200
+                    return response_handler.success_response(None, "插件加载成功")
                 else:
-                    return jsonify({
-                        "code": 500,
-                        "message": "插件加载失败"
-                    }), 500
+                    return response_handler.error_response("插件加载失败")
             else:
-                return jsonify({
-                    "code": 404,
-                    "message": "插件初始化文件不存在"
-                }), 404
+                return response_handler.custom_error_response("插件初始化文件不存在")
         else:
-            return jsonify({
-                "code": 404,
-                "message": "插件不存在"
-            }), 404
+            return response_handler.custom_error_response("插件不存在")
             
     except Exception as e:
         logging.error(f"加载插件失败: {e}")
-        return jsonify({
-            "code": 500,
-            "message": "加载插件失败"
-        }), 500
+        return response_handler.error_response("加载插件失败")
 
 
 @plugin_api_bp.route('/plugins/<plugin_name>', methods=['DELETE'])
@@ -223,22 +186,13 @@ def unload_plugin(plugin_name):
         plugin_manager = get_plugin_manager()
         
         if plugin_manager.unload_plugin(plugin_name):
-            return jsonify({
-                "code": 200,
-                "message": "插件卸载成功"
-            }), 200
+            return response_handler.success_response(None, "插件卸载成功")
         else:
-            return jsonify({
-                "code": 404,
-                "message": "插件不存在"
-            }), 404
+            return response_handler.custom_error_response("插件不存在")
             
     except Exception as e:
         logging.error(f"卸载插件失败: {e}")
-        return jsonify({
-            "code": 500,
-            "message": "卸载插件失败"
-        }), 500
+        return response_handler.error_response("卸载插件失败")
 
 
 @plugin_api_bp.route('/plugins/hooks', methods=['GET'])
@@ -270,17 +224,8 @@ def get_hooks():
                 if hasattr(hook_func, '__self__'):
                     plugin_names.append(hook_func.__self__.name)
             hook_info[hook_name] = plugin_names
-        
-        return jsonify({
-            "code": 200,
-            "data": {
-                "hooks": hook_info
-            }
-        }), 200
+        return response_handler.success_response({"hooks": hook_info})
         
     except Exception as e:
         logging.error(f"获取钩子信息失败: {e}")
-        return jsonify({
-            "code": 500,
-            "message": "获取钩子信息失败"
-        }), 500
+        return response_handler.error_response("获取钩子信息失败")
