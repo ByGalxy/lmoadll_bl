@@ -8,7 +8,7 @@ import logging
 import json
 from flask import Blueprint, Response, request
 from admin import admin_required
-from magic.utils.token import GetCurrentUserIdentity
+from magic.utils.jwt import GetCurrentUserIdentity
 from magic.utils.TomlConfig import DoesitexistConfigToml
 from magic.utils.db import (
     GetUserRoleByIdentity,

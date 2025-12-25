@@ -30,10 +30,10 @@ ph = PasswordHasher(
 )
 
 
-def HashPassword(password):
+def HashPassword(password: str):
     """对密码进行哈希处理"""
     try:
-        if not password or not isinstance(password, str):
+        if not password:
             print("密码必须是非空字符串")
             return None
         
@@ -44,7 +44,7 @@ def HashPassword(password):
         return None
 
 
-def VerifyPassword(pw_hash, password):
+def VerifyPassword(pw_hash: str, password: str):
     """验证密码是否匹配哈希值"""
     try:
         if not pw_hash or not password:

@@ -12,7 +12,7 @@ import os
 import importlib
 import importlib.util
 import inspect
-from typing import Dict, List, Any, Callable, Optional
+from typing import Dict, List, Any, Callable, Optional, Tuple
 from abc import ABC, abstractmethod
 import logging
 
@@ -52,7 +52,8 @@ class PluginManager:
     def __init__(self, plugin_dir: str):
         self.plugin_dir = plugin_dir
         self.plugins: Dict[str, PluginBase] = {}
-        self.hooks: Dict[str, List[Callable]] = {}
+        self.hooks: Dict[str, List[Tuple[str, Callable]]] = {}
+        self.api_routes: List[Tuple[str, Callable]] = []
         self.logger = logging.getLogger(__name__)
 
 
@@ -167,6 +168,10 @@ class PluginManager:
                 if 'hooks' in registration:
                     self._register_hooks(plugin_instance.name, registration['hooks'])
                 
+                # 注册API路由
+                if 'api_routes' in registration:
+                    self._register_api_routes(plugin_instance.name, registration['api_routes'])
+                
                 # 调用启用回调
                 plugin_instance.on_enable()
                 
@@ -187,8 +192,18 @@ class PluginManager:
         for hook_name, hook_func in hooks.items():
             if hook_name not in self.hooks:
                 self.hooks[hook_name] = []
-            self.hooks[hook_name].append(hook_func)
+            self.hooks[hook_name].append((plugin_name, hook_func))
             self.logger.debug(f"插件 {plugin_name} 注册钩子: {hook_name}")
+    
+    def _register_api_routes(self, plugin_name: str, routes_func: Callable):
+        """注册插件API路由
+        
+        Args:
+            plugin_name: 插件名称
+            routes_func: 路由注册函数
+        """
+        self.api_routes.append((plugin_name, routes_func))
+        self.logger.debug(f"插件 {plugin_name} 注册API路由")
     
 
     def call_hook(self, hook_name: str, *args, **kwargs) -> List[Any]:
@@ -204,13 +219,35 @@ class PluginManager:
         """
         results = []
         if hook_name in self.hooks:
-            for hook_func in self.hooks[hook_name]:
+            for plugin_name, hook_func in self.hooks[hook_name]:
                 try:
                     result = hook_func(*args, **kwargs)
                     results.append(result)
                 except Exception as e:
                     self.logger.error(f"调用钩子 {hook_name} 时发生错误: {e}")
         return results
+    
+    def register_all_api_routes(self, app) -> bool:
+        """注册所有插件的API路由
+        
+        Args:
+            app: Flask应用实例
+            
+        Returns:
+            bool: 是否注册成功
+        """
+        try:
+            for plugin_name, routes_func in self.api_routes:
+                try:
+                    routes_func(app)
+                    self.logger.info(f"成功注册插件 {plugin_name} 的API路由")
+                except Exception as e:
+                    self.logger.error(f"注册插件 {plugin_name} 的API路由失败: {e}")
+                    return False
+            return True
+        except Exception as e:
+            self.logger.error(f"注册API路由时发生错误: {e}")
+            return False
     
 
     def get_plugin(self, plugin_name: str) -> Optional[PluginBase]:
@@ -253,11 +290,17 @@ class PluginManager:
             # 移除钩子
             for hook_name in list(self.hooks.keys()):
                 self.hooks[hook_name] = [
-                    hook for hook in self.hooks[hook_name] 
-                    if hasattr(hook, '__self__') and hook.__self__.name != plugin_name
+                    (pname, hook_func) for pname, hook_func in self.hooks[hook_name] 
+                    if pname != plugin_name
                 ]
                 if not self.hooks[hook_name]:
                     del self.hooks[hook_name]
+            
+            # 移除API路由
+            self.api_routes = [
+                (pname, routes_func) for pname, routes_func in self.api_routes
+                if pname != plugin_name
+            ]
             
             # 移除插件
             del self.plugins[plugin_name]
@@ -270,7 +313,6 @@ class PluginManager:
             return False
 
 
-# 全局插件管理器实例
 _plugin_manager: Optional[PluginManager] = None
 
 
@@ -313,4 +355,4 @@ def call_plugin_hook(hook_name: str, *args, **kwargs) -> List[Any]:
     Returns:
         List[Any]: 所有钩子的返回值列表
     """
-    return get_plugin_manager().call_hook(hook_name, *args, **kwargs)    
+    return get_plugin_manager().call_hook(hook_name, *args, **kwargs)

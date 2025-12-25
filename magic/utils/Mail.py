@@ -7,13 +7,23 @@
 
 import tomllib
 import logging
+from flask import Flask
 from flask_mail import Mail
 from magic.utils.TomlConfig import CONFIG_PATH
+from magic.middleware.errorhandler import handle_errors
 
 
 mail = Mail()
 MAIL_SENDER_NAME = "数数洞洞"
 SMTP_CONFIG = {}
+
+
+@handle_errors("初始化Flask-Mail失败")
+def init_mail(app: Flask):
+    for key, value in SMTP_CONFIG.items():
+        app.config[key] = value
+    app.config['MAIL_DEBUG'] = False
+    mail.init_app(app)
 
 
 def load_matl_config():
@@ -63,13 +73,3 @@ def load_matl_config():
         
     except Exception as e:
         logging.error(f"加载配置文件失败: {e}")
-        if not SMTP_CONFIG:
-            SMTP_CONFIG.update({
-                'MAIL_SERVER': '',
-                'MAIL_PORT': 465,
-                'MAIL_USERNAME': '',
-                'MAIL_PASSWORD': '',
-                'MAIL_USE_SSL': True,
-                'MAIL_USE_TLS': False
-            })
-        SMTP_CONFIG['MAIL_DEFAULT_SENDER'] = (MAIL_SENDER_NAME, default_username)

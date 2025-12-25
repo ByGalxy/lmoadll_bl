@@ -11,43 +11,41 @@
 import logging
 import os
 import json
-from flask import Blueprint, request
+from flask import request
 from magic.PluginSystem import get_plugin_manager
 from magic.middleware.response import response_handler
 from typing import Any
 
 
-plugin_api_bp = Blueprint('plugin_api', __name__)
+class plugins:
 
+    @staticmethod
+    @response_handler.response_middleware
+    def get_plugins():
+        """获取所有插件信息
 
-@plugin_api_bp.route('/plugins', methods=['GET'])
-@response_handler.response_middleware
-def get_plugins():
-    """获取所有插件信息
-
-    GET /api/plugin/plugins
-    
-    响应格式：
-    ```json
-    {
-        "code": 200,
-        "data": {
-            "plugins": [
-                {
-                    "name": "插件名称",
-                    "version": "版本号",
-                    "description": "插件描述",
-                    "author": "作者",
-                    "status": "状态",
-                    "type": "folder|file",
-                    "config": {}
-                }
-            ]
+        GET /api/plugin/plugins
+        
+        响应格式：
+        ```json
+        {
+            "code": 200,
+            "data": {
+                "plugins": [
+                    {
+                        "name": "插件名称",
+                        "version": "版本号",
+                        "description": "插件描述",
+                        "author": "作者",
+                        "status": "状态",
+                        "type": "folder|file",
+                        "config": {}
+                    }
+                ]
+            }
         }
-    }
-    ```
-    """
-    try:
+        ```
+        """
         plugin_manager = get_plugin_manager()
         plugins = plugin_manager.get_all_plugins()
         
@@ -119,26 +117,21 @@ def get_plugins():
                         plugin_list.append(plugin_info)
         
         return response_handler.success_response(plugin_list)
+
+
+    @staticmethod
+    def load_plugin(plugin_name):
+        """加载指定插件
         
-    except Exception as e:
-        logging.error(f"获取插件列表失败: {e}")
-        return response_handler.error_response("获取插件列表失败")
+        POST /api/plugin/plugins/<plugin_name>
 
-
-@plugin_api_bp.route('/plugins/<plugin_name>', methods=['POST'])
-def load_plugin(plugin_name):
-    """加载指定插件
-    
-    POST /api/plugin/plugins/<plugin_name>
-
-    请求格式：
-    ```json
-    {
-        "action": "load"
-    }
-    ```
-    """
-    try:
+        请求格式：
+        ```json
+        {
+            "action": "load"
+        }
+        ```
+        """
         data = request.get_json()
         if not data or data.get('action') != 'load':
             return response_handler.custom_error_response("请求参数错误")
@@ -162,58 +155,50 @@ def load_plugin(plugin_name):
                 return response_handler.custom_error_response("插件初始化文件不存在")
         else:
             return response_handler.custom_error_response("插件不存在")
-            
-    except Exception as e:
-        logging.error(f"加载插件失败: {e}")
-        return response_handler.error_response("加载插件失败")
 
 
-@plugin_api_bp.route('/plugins/<plugin_name>', methods=['DELETE'])
-def unload_plugin(plugin_name):
-    """卸载指定插件
+    @staticmethod
+    @response_handler.response_middleware
+    def unload_plugin(plugin_name):
+        """卸载指定插件
 
-    DELETE /api/plugin/plugins/<plugin_name>
-    
-    响应格式：
-    ```json
-    {
-        "code": 200,
-        "message": "插件卸载成功"
-    }
-    ```
-    """
-    try:
+        DELETE /api/plugin/plugins/<plugin_name>
+        
+        响应格式：
+        ```json
+        {
+            "code": 200,
+            "message": "插件卸载成功"
+        }
+        ```
+        """
         plugin_manager = get_plugin_manager()
         
         if plugin_manager.unload_plugin(plugin_name):
             return response_handler.success_response(None, "插件卸载成功")
         else:
             return response_handler.custom_error_response("插件不存在")
-            
-    except Exception as e:
-        logging.error(f"卸载插件失败: {e}")
-        return response_handler.error_response("卸载插件失败")
 
 
-@plugin_api_bp.route('/plugins/hooks', methods=['GET'])
-def get_hooks():
-    """获取所有钩子信息
+    @staticmethod
+    @response_handler.response_middleware
+    def get_hooks():
+        """获取所有钩子信息
 
-    GET /api/plugin/plugins/hooks
-    
-    响应格式：
-    ```json
-    {
-        "code": 200,
-        "data": {
-            "hooks": {
-                "hook_name": ["plugin1", "plugin2"]
+        GET /api/plugin/plugins/hooks
+        
+        响应格式：
+        ```json
+        {
+            "code": 200,
+            "data": {
+                "hooks": {
+                    "hook_name": ["plugin1", "plugin2"]
+                }
             }
         }
-    }
-    ```
-    """
-    try:
+        ```
+        """
         plugin_manager = get_plugin_manager()
         hooks = plugin_manager.hooks
         
@@ -225,7 +210,3 @@ def get_hooks():
                     plugin_names.append(hook_func.__self__.name)
             hook_info[hook_name] = plugin_names
         return response_handler.success_response({"hooks": hook_info})
-        
-    except Exception as e:
-        logging.error(f"获取钩子信息失败: {e}")
-        return response_handler.error_response("获取钩子信息失败")

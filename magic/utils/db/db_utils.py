@@ -35,11 +35,11 @@ def GetDbConnection(tablename=None):
 
             elif db_type == "mysql":
                 # 从配置中获取MySQL连接信息
-                db_host = DoesitexistConfigToml("db", "sql_host", "localhost")
-                db_port = DoesitexistConfigToml("db", "sql_port", 3306)
-                db_name = DoesitexistConfigToml("db", "sql_database", "lmoadll_bl")
-                db_user = DoesitexistConfigToml("db", "sql_user", "root")
-                db_password = DoesitexistConfigToml("db", "sql_password", "")
+                db_host = DoesitexistConfigToml("db", "sql_host")
+                db_port = DoesitexistConfigToml("db", "sql_port")
+                db_name = DoesitexistConfigToml("db", "sql_database")
+                db_user = DoesitexistConfigToml("db", "sql_user")
+                db_password = DoesitexistConfigToml("db", "sql_password")
                 db_orm.register_db(
                     "default",
                     "mysql",
@@ -56,11 +56,11 @@ def GetDbConnection(tablename=None):
 
             elif db_type == "postgresql":
                 # 从配置中获取PostgreSQL连接信息
-                db_host = DoesitexistConfigToml("db", "sql_host", "localhost")
-                db_port = DoesitexistConfigToml("db", "sql_port", 5432)
-                db_name = DoesitexistConfigToml("db", "sql_database", "lmoadll_bl")
-                db_user = DoesitexistConfigToml("db", "sql_user", "postgres")
-                db_password = DoesitexistConfigToml("db", "sql_password", "")
+                db_host = DoesitexistConfigToml("db", "sql_host")
+                db_port = DoesitexistConfigToml("db", "sql_port")
+                db_name = DoesitexistConfigToml("db", "sql_database")
+                db_user = DoesitexistConfigToml("db", "sql_user")
+                db_password = DoesitexistConfigToml("db", "sql_password")
                 db_orm.register_db(
                     "default",
                     "postgresql",
@@ -194,6 +194,7 @@ def InitVerificationDbConn(db_type: str, **kwargs) -> List[Union[bool, Union[int
             return [True, 0]
         
         elif db_type == "mysql":
+            db_prefix = kwargs.get("db_prefix", "")
             db_host = kwargs.get("sql_host", "localhost")
             db_port = kwargs.get("sql_port", 3306)
             db_name = kwargs.get("sql_database", "lmoadll_bl")
@@ -218,6 +219,7 @@ def InitVerificationDbConn(db_type: str, **kwargs) -> List[Union[bool, Union[int
             return [True, 0]
         
         elif db_type == "postgresql":
+            db_prefix = kwargs.get("db_prefix", "")
             db_host = kwargs.get("sql_host", "localhost")
             db_port = kwargs.get("sql_port", 5432)
             db_name = kwargs.get("sql_database", "lmoadll_bl")
@@ -334,7 +336,7 @@ def GetSiteOptionByName(option_name: str):
             db_orm.return_db(db, "default")
 
 
-def GetUserByEmail(username_email: str) -> Optional[Dict[str, Any]]:
+def GetUserByEmail(username_email: str):
     """根据用户名或邮箱获取用户信息"""
     db = None
     try:
@@ -366,7 +368,7 @@ def GetUserByEmail(username_email: str) -> Optional[Dict[str, Any]]:
             db_orm.return_db(db, "default")
 
 
-def GetUserRoleByIdentity(user_identity: int) -> Union[List[Union[bool, str]], Optional[Tuple[str]]]:
+def GetUserRoleByIdentity(user_identity: int) -> Union[List[Union[bool, str]], Optional[Tuple[str, ...]]]:
     """通过用户的uid查找用户的身份权限"""
     success, message, db, cursor, table_name = GetDbConnection("users")
     if not success:
@@ -376,9 +378,26 @@ def GetUserRoleByIdentity(user_identity: int) -> Union[List[Union[bool, str]], O
     try:
         db.execute(f"SELECT `group` FROM {table_name} WHERE uid = ?", (user_identity,))
         user_group = db.fetchone()
-        if user_group:
-            return tuple(user_group)  # 转换为元组，如: ('superadministrator',)
-        return user_group
+
+        # 统一处理不同驱动返回类型（dict, 序列/元组, sqlite3.Row, None）
+        if not user_group:
+            return None
+
+        # dict 情况(如 pymysql DictCursor)
+        if isinstance(user_group, dict):
+            group_val = user_group.get("group") or user_group.get("group")
+            return (str(group_val),) if group_val is not None else None
+
+        # 序列或可索引对象(如 psycopg2/SQLite 返回的 tuple 或 Row)
+        try:
+            first = user_group[0]
+            return (str(first),)
+        except Exception:
+            # 回退：尝试通过属性或映射访问
+            if hasattr(user_group, "get"):
+                group_val = user_group.get("group")
+                return (str(group_val),) if group_val is not None else None
+            return None
     except Exception as e:
         logging.error(f"查询用户角色失败: {e}")
         return [False, str(e)]
@@ -467,7 +486,7 @@ def SearchUsers(keyword: str) -> Union[List[Union[bool, str]], List[Dict[str, An
         return user_list
     except Exception as e:
         logging.error(f"搜索用户失败: {e}")
-        return [False, str(e)]    
+        return [False, str(e)]
     finally:
         if db:
             db_orm.return_db(db, "default")

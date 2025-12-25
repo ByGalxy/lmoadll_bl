@@ -11,7 +11,7 @@ import pathlib
 from tomli_w import dump
 
 
-CONFIG_PATH = pathlib.Path(__file__).parent.parent.parent / "config.toml" # 配置文件路径
+CONFIG_PATH = pathlib.Path(__file__).parent.parent.parent / "config.toml"
 
 
 __all__ = [

@@ -16,6 +16,7 @@ import jwt as pyjwt
 from flask import Flask, request
 from typing import Dict
 from datetime import datetime, timezone, timedelta
+from magic.middleware.errorhandler import handle_errors
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
@@ -85,6 +86,7 @@ class JWTKeyManager:
 jwt_key_manager = JWTKeyManager(rotation_days=7, max_keys=8)
 
 
+@handle_errors("初始化JWT管理器失败")
 def InitJwtManager(app: Flask) -> JWTManager:
     """初始化JWT管理器, 初始化JWT管理器并配置JWT相关设置"""
 
@@ -219,7 +221,7 @@ def RefreshToken(lmoadll_refresh_token, request=None):
         
         # 3. 如果提供了请求对象，进行额外的安全检查
         if request:
-            # TODO 需要额外的安全检查，例如验证来源IP等
+            # [ ] TODO 需要额外的安全检查，例如验证来源IP等
             # 验证来源IP（可选，如果需要严格的会话绑定）
             # 注意：在实际生产环境中，需要考虑代理和CDN的情况
             current_ip = request.remote_addr  # noqa: F841

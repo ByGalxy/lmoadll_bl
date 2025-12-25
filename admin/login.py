@@ -8,7 +8,7 @@
 """
 
 from flask import Blueprint, send_file, request, redirect
-from magic.utils.token import GetCurrentUserIdentity
+from magic.utils.jwt import GetCurrentUserIdentity
 
 
 login_bp = Blueprint('login', __name__, url_prefix='/login')

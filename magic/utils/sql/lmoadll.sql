@@ -45,6 +45,7 @@ create table lmoadll_coze_ai
     user_id         integer      not null,
     cozehh_id       integer      not null,
     name            varchar(64)  default null,
+    last_section_id int(20)      default null,
     created_at      int(10)      default 0,
     updated_at      int(10)      default 0,
     

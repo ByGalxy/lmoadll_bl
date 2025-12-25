@@ -9,10 +9,10 @@ from magic import Init_module
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+_ = load_dotenv()
 app = Flask(__name__)
 app.config["DEBUG"] = os.getenv("debug", "False").lower() in ("true", "1", "t")
-app.json.sort_keys = False # type: ignore
+app.json.sort_keys = False # pyright: ignore[reportAttributeAccessIssue]
 Init_module(app)
 
 

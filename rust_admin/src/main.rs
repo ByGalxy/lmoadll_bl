@@ -1,57 +1,35 @@
-use axum::{
-    Router,
-    routing::get,
-};
-use std::net::SocketAddr;
-use tracing_subscriber;
-
-mod config;
-mod handlers;
-mod models;
-mod routes;
+mod logger;
+mod auth;
+mod jwt;
+mod cookies;
+mod types;
 mod middleware;
-mod services;
-mod static_files;
+mod routes;
+use actix_web::{App, HttpResponse, HttpServer, Responder, get};
+use actix_web::middleware as actix_middleware;
+use logger::init_logger;
+use routes::modules::userRouter::user_routes;
+use log::info;
 
-use crate::config::Config;
 
-#[tokio::main]
-async fn main() -> Result<(), String> {
-    // Initialize tracing
-    tracing_subscriber::fmt::init();
-    
-    // Load configuration
-    let config = Config::from_env()?;
-    tracing::info!("Configuration loaded");
-    
-    // Create database connection pool
-    let pool = config.create_pool().await?;
-    tracing::info!("Database connection pool created");
-    
-    // Create auth service
-    let auth_service = services::auth::AuthService::new(pool.clone(), config.jwt_secret.clone());
-    
-    // Build our application with routes
-    let app = Router::new()
-        .route("/", get(root))
-        .nest("/admin", routes::admin::routes(auth_service.clone().into()))
-        .fallback(static_files::serve_static);
-    
-    // Run our application
-    let addr = SocketAddr::from((config.server_host.parse::<std::net::IpAddr>().unwrap(), config.server_port));
-    tracing::info!("Server listening on {}", addr);
-    
-    let listener = tokio::net::TcpListener::bind(addr).await
-        .map_err(|e| format!("Failed to bind to address: {}", e))?;
-    
-    axum::serve(listener, app)
+#[get("/")]
+async fn hello() -> impl Responder {
+    HttpResponse::ExpectationFailed().body("Hello world")
+}
+
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    init_logger();
+    let addr = ("127.0.0.1", 8080);
+    info!("🚀 Server running at `http://{}:{}`", addr.0, addr.1);
+    HttpServer::new(|| {
+        App::new()
+            .service(hello)
+            .configure(user_routes)
+            .wrap(actix_middleware::Logger::default())
+    })
+        .bind(addr)?
+        .run()
         .await
-        .map_err(|e| format!("Server error: {}", e))?;
-    
-    Ok(())
 }
-
-async fn root() -> &'static str {
-    "{\"Status\": \"OK\"}"
-}
-

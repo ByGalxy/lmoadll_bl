@@ -5,16 +5,18 @@
 
 包含ORM模型基类及核心数据模型。
 """
+from __future__ import annotations
+from magic.utils.db.adapters import DatabaseAdapter
 
 
-class Model:
+class Model():
     """ORM模型基类"""
 
-    _table_name = None
-    _primary_key = "uid"
+    _table_name: str | None = None
+    _primary_key: str = "uid"
 
     @classmethod
-    def set_table_name(cls, table_name):
+    def set_table_name(cls, table_name: str):
         """设置表名"""
         cls._table_name = table_name
 
@@ -27,7 +29,7 @@ class Model:
         return cls._table_name
 
     @classmethod
-    def find(cls, db, **kwargs):
+    def find(cls, db: DatabaseAdapter, **kwargs: str) -> object:
         """根据条件查找记录"""
         table_name = cls.get_table_name()
 
@@ -36,11 +38,11 @@ class Model:
             query = f"SELECT * FROM {table_name}"
             params = None
         else:
-            conditions = []
-            params = []
+            conditions: list[str] = []
+            params_list: list[object] = []
             for key, value in kwargs.items():
                 conditions.append(f"{key} = ?")
-                params.append(value)
+                params_list.append(value)
 
             # 替换参数占位符为数据库特定的格式
             query = f"SELECT * FROM {table_name} WHERE {' AND '.join(conditions)}"
@@ -48,6 +50,8 @@ class Model:
                 query = query.replace("?", "%s")
             elif db.config.get("type") == "postgresql":
                 query = query.replace("?", "%s")
+
+            params = tuple(params_list) if params_list else None
 
         db.execute(query, params)
         return db.fetchall()
@@ -64,7 +68,7 @@ class Model:
         elif db.config.get("type") == "postgresql":
             query = query.replace("?", "%s")
 
-        db.execute(query, [id_value])
+        db.execute(query, (id_value,))
         return db.fetchone()
 
     @classmethod
@@ -75,7 +79,7 @@ class Model:
         # 构建插入语句
         columns = ", ".join(kwargs.keys())
         placeholders = ", ".join(["?" for _ in kwargs])
-        params = list(kwargs.values())
+        params_list = list(kwargs.values())
 
         query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
 
@@ -85,7 +89,7 @@ class Model:
         elif db.config.get("type") == "postgresql":
             query = query.replace("?", "%s")
 
-        db.execute(query, params)
+        db.execute(query, tuple(params_list))
         db.commit()
 
         # 返回插入的ID
@@ -108,11 +112,12 @@ class Model:
 
         # 构建更新语句
         updates = []
-        params = []
+        params_list: list[object] = []
         for key, value in kwargs.items():
             updates.append(f"{key} = ?")
-            params.append(value)
-        params.append(id_value)
+            params_list.append(value)
+        # 将 id 放到参数末尾
+        params_list.append(id_value)
 
         query = (
             f"UPDATE {table_name} SET {' ,'.join(updates)} WHERE {cls._primary_key} = ?"
@@ -124,7 +129,7 @@ class Model:
         elif db.config.get("type") == "postgresql":
             query = query.replace("?", "%s")
 
-        db.execute(query, params)
+        db.execute(query, tuple(params_list))
         db.commit()
 
         return db.cursor.rowcount
@@ -142,7 +147,7 @@ class Model:
         elif db.config.get("type") == "postgresql":
             query = query.replace("?", "%s")
 
-        db.execute(query, [id_value])
+        db.execute(query, (id_value,))
         db.commit()
 
         return db.cursor.rowcount
